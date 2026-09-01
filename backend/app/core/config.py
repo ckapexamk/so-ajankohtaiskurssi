@@ -8,7 +8,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 class Settings(BaseSettings):
     database_url: str
-    api_port: int
+    api_port: int = 8000
+    api_host: str = "0.0.0.0"
 
     model_config = SettingsConfigDict(
         env_file=PROJECT_ROOT / ".env",
@@ -18,5 +19,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-print("API port:", settings.api_port)
-print("http://localhost:8000/docs")

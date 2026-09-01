@@ -1,4 +1,8 @@
 # Excercise Progress Tracker
 
-Work in Progress web-application that uses a React (TypeScript) frontend, FastAPI (Python) backend, and PostgreSQL for data management.
-These are layered together using Docket Composer. The app will have some AI functionality through a local Ollama model.
+Web-application that uses React frontend, FastAPI/Uvicorn backend, and PostgreSQL for the database.
+Docker compose is used to run these three layers together efficiently as a multi-container application.
+
+## Docker Compose Published Ports
+- API: 8000
+- DB:  5432
