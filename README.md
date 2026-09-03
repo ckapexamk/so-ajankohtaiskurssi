@@ -1,16 +1,76 @@
-# Excercise Progress Tracker
+## Table of Contents
+- [About](#-about)
+- [Prerequisites](#prerequisites)
+- [How to Install](#how-to-install)
+- [How to Test](#how-to-test)
+- [Troubleshooting](#troubleshooting)
 
-Excercise tracking web-app that uses React frontend, FastAPI/Uvicorn backend, and PostgreSQL for the database.
-Docker compose is utilized to run the three layers together as a multi-container application.
+## About
 
-## How to test
-1. open terminal
-2. `cp .env.example .env` copies environment file template
-    - fill in your own environment variables in **.env**
-3. `docker compose up --build` builds and starts containers
-4. `docker compose ps` tests if containers are up
-5. `docker compose down` stops containers
+**Excercise progress tracking** web-app built using **React** frontend, **FastAPI**/Uvicorn backend, and **PostgreSQL** for the database. **Docker** compose is utilized to run these three layers together as a multi-container application.
 
-### Ports used
-- API: 8000
-- DB:  5432
+***Work In Progress ...***
+- ~~Doesn't do anything yet~~
+- Some api routes, and a homepage placeholder.
+
+Sprint index: [docs/sprints/README.md](./docs/sprints/README.md)
+
+### Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Git](https://git-scm.com/install/windows) (For cloning the repository)
+
+## How to Install
+1. Clone the repository
+```powershell
+git clone https://github.com/ckapexamk/so-ajankohtaiskurssi.git
+cd so-ajankohtaiskurssi
+
+cp .env.example .env
+docker compose up --build
+```
+
+2. Copy the environment template, and create ``.env``
+```powershell
+cp .env.example .env
+```
+
+3. Build and start the project
+```powershell
+docker compose up --build
+```
+    
+## How to Test
+
+Currently testable URLs:
+- http://localhost:5173 — web/
+- http://localhost:8000/docs — api/docs
+- http://localhost:8000/health — api/health
+
+---
+
+When done testing, you can stop the app with:
+```powershell
+docker compose down
+```
+
+## Troubleshooting
+
+### Ports
+These are the network **ports** used by the Docker containers. Make sure they are not already in use.
+- web: **5173**
+- api: **8000**
+- db:  **5432**
+
+### Docker compose fails
+Check that Docker and Docker compose are available.
+```bash
+docker --version
+docker compose version
+```
+
+### Environment variables (.env)
+If you forgot to create ``.env`` from the ``.env.example``
+- Open a terminal from the project root and run:
+```powershell
+cp .env.example .env
+```
