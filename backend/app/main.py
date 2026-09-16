@@ -1,12 +1,14 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.config import get_settings
 from app.api.health import router as health_router
+from app.core.config import get_settings
+from app.db.session import get_db
 
 settings = get_settings()
+session = get_db()
 
-app = FastAPI()
+app = FastAPI(title="Excercise Progress Tracker")
 
 app.add_middleware(
     CORSMiddleware,
@@ -15,15 +17,4 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-# config testaus
-@app.get("/")
-def config_check():
-    return {
-        "api_port": settings.api_port,
-        "database_url": bool(settings.database_url),
-    }
-
-
 app.include_router(health_router)
