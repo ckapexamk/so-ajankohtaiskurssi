@@ -1,6 +1,10 @@
 from app.models.user import User
+from .activity_type import ActivityType
 
-__all__ = ["User"]
+__all__ = [
+    "User",
+    "ActivityType",
+]
 
 
 #   alembic/env.py
