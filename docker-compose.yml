@@ -19,6 +19,8 @@ services:
   api:
     build:
       context: ./backend
+    volumes:
+      - ./backend:/app
     env_file: .env
     environment:
       API_HOST: ${API_HOST}
