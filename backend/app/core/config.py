@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     database_url: str
     api_port: int = 8000
     api_host: str = "0.0.0.0"
+    sqladmin_username: str
+    sqladmin_password: str
+    sqladmin_secret_key: str
 
     model_config = SettingsConfigDict(
         env_file=PROJECT_ROOT / ".env",
