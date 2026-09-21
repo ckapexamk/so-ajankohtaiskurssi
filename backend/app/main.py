@@ -8,6 +8,7 @@ from app.api.health import router as health_router
 from app.core.config import get_settings
 from app.db.session import get_db
 
+
 settings = get_settings()
 session = get_db()
 

@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     sqladmin_username: str
     sqladmin_password: str
     sqladmin_secret_key: str
+    jwt_secret: str
+    access_token_expire_minutes: int = 30
 
     model_config = SettingsConfigDict(
         env_file=PROJECT_ROOT / ".env",
