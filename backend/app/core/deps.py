@@ -11,8 +11,6 @@ from app.core.security import decode_access_token
 from app.db.session import get_db
 
 
-session = get_db()
-
 security = HTTPBearer()
 
 
