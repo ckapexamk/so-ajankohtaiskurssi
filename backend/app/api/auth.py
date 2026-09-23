@@ -40,3 +40,9 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
             status_code=401,
             detail="Invalid email or password",
         )
+
+@router.get("/me", response_model=UserPublic)
+def me(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    return current_user
