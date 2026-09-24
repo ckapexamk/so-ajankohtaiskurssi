@@ -4,6 +4,7 @@ import './App.css';
 
 import HomePage from "./pages/HomePage";
 import RegisterPage from "./pages/RegisterPage";
+import LoginPage from "./pages/LoginPage";
 
 const App : React.FC = () : React.ReactElement => {
   return (
@@ -11,6 +12,7 @@ const App : React.FC = () : React.ReactElement => {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/login" element={<LoginPage />} />
       </Routes>
     </>
   );

@@ -1,10 +1,16 @@
+import { getToken } from "./token";
+
 const apiUrl = import.meta.env.VITE_API_BASE_URL
 
 const apiReq = async <T,>(path: string, req: RequestInit = {}) : Promise<T> => {
     const headers = new Headers(req.headers);
+    const token = getToken();
 
     if (req.body && !headers.has("Content-Type")) {
         headers.set("Content-Type", "application/json");
+    }
+    if (token && !headers.has("Authorization")) {
+        headers.set("Authorization", `Bearer ${token}`);
     }
 
     const response = await fetch(`${apiUrl}${path}`, {

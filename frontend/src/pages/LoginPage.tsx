@@ -1,48 +1,52 @@
 import { useNavigate } from "react-router";
 import { useState } from "react";
+import { setToken } from "../api/token";
 import apiReq from "../api/client";
 
-interface NewUser {
+
+interface LoginUser {
   email: string;
   password: string;
-  display_name: string;
 }
 
-const registerUserRequest = async (data: NewUser) => {
-    return apiReq<NewUser>("/auth/register", {
+interface LoginResponse {
+  access_token: string;
+  token_type: string;
+}
+
+const loginRequest = async (data: LoginUser) => {
+    return apiReq<LoginResponse>("/auth/login", {
       method: "POST",
       body: JSON.stringify(data),
     });
   };
 
-const RegisterPage: React.FC = (): React.ReactElement => {
+const LoginPage: React.FC = (): React.ReactElement => {
   
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [displayName, setDisplayName] = useState<string>("");
   
   const [disableInput, setDisableInput] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   let redirect = useNavigate();
 
-  const registerUser = async (event: React.SubmitEvent) => {
+  const User = async (event: React.SubmitEvent) => {
     event.preventDefault();
     setDisableInput(true);
     setErrorMessage("");
 
     try {
-      await registerUserRequest({
+      const login = await loginRequest({
         email,
         password,
-        display_name: displayName,
       });
 
-      redirect("/login");
+      setToken(login.access_token);
+      redirect("/");
+
     } catch (error) {
-      if (error instanceof Error && error.message.includes("400")) {
-        setErrorMessage("Email already exists.");
-      } else {
-        setErrorMessage("Registration failed.");
+      if (error instanceof Error) {
+        setErrorMessage("Login failed.");
       }
     } finally {
       setDisableInput(false);
@@ -51,12 +55,12 @@ const RegisterPage: React.FC = (): React.ReactElement => {
 
   return (
     <>
-      <h2>Register</h2>
+      <h2>Login</h2>
         {errorMessage && (
           <div style={{ backgroundColor: "red", color: "white", padding: "1em" }}>
             <strong role="alert">{errorMessage}</strong></div>
         )}
-      <form onSubmit={registerUser} style={{ marginTop: "1em" }}>
+      <form onSubmit={User} style={{ marginTop: "1em" }}>
         <div>
         <label>
           Email:
@@ -79,16 +83,6 @@ const RegisterPage: React.FC = (): React.ReactElement => {
             onChange={(e) => setPassword(e.target.value)}
           />
         </label></div>
-        <div>
-        <label>
-          Display name:
-          <input
-            required    
-            placeholder="Display name"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-          />
-        </label></div>
         <button type="submit" disabled={disableInput}>
           {disableInput ? "Please wait..." : "Submit"}
         </button>
@@ -97,4 +91,4 @@ const RegisterPage: React.FC = (): React.ReactElement => {
   );
 };
 
-export default RegisterPage;
+export default LoginPage;
