@@ -1,17 +1,19 @@
 import React from 'react';
 import { Route, Routes } from 'react-router';
-import './App.css'
+import './App.css';
 
-import HomePage from './pages/HomePage';
+import HomePage from "./pages/HomePage";
+import RegisterPage from "./pages/RegisterPage";
 
 const App : React.FC = () : React.ReactElement => {
   return (
     <>
-    <Routes>
+      <Routes>
         <Route path="/" element={<HomePage />} />
-    </Routes>
+        <Route path="/register" element={<RegisterPage />} />
+      </Routes>
     </>
   );
-}
+};
 
-export default App
+export default App;
