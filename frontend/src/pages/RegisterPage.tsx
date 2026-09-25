@@ -9,18 +9,17 @@ interface NewUser {
 }
 
 const registerUserRequest = async (data: NewUser) => {
-    return apiReq<NewUser>("/auth/register", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-  };
+  return apiReq<NewUser>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+};
 
 const RegisterPage: React.FC = (): React.ReactElement => {
-  
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [displayName, setDisplayName] = useState<string>("");
-  
+
   const [disableInput, setDisableInput] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   let redirect = useNavigate();
@@ -52,46 +51,55 @@ const RegisterPage: React.FC = (): React.ReactElement => {
   return (
     <>
       <h2>Register</h2>
-        {errorMessage && (
-          <div style={{ backgroundColor: "red", color: "white", padding: "1em" }}>
-            <strong role="alert">{errorMessage}</strong></div>
-        )}
-      <form onSubmit={registerUser} style={{ marginTop: "1em" }}>
-        <div>
+      {errorMessage && (
+        <div style={{ backgroundColor: "red", color: "white", padding: "1em" }}>
+          <strong role="alert">{errorMessage}</strong>
+        </div>
+      )}
+      <form
+        onSubmit={registerUser}
+        style={{ display: "flex", flexDirection: "column", gap: "0.5em" }}
+      >
         <label>
           Email:
-          <input
-            required
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </label></div>
-        <div>
+          <div>
+            <input
+              required
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+        </label>
         <label>
           Password:
-          <input
-            required
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </label></div>
-        <div>
+          <div>
+            <input
+              required
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+        </label>
         <label>
           Display name:
-          <input
-            required    
-            placeholder="Display name"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-          />
-        </label></div>
-        <button type="submit" disabled={disableInput}>
-          {disableInput ? "Please wait..." : "Submit"}
-        </button>
+          <div>
+            <input
+              required
+              placeholder="Display name"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+            />
+          </div>
+        </label>
+        <div>
+          <button type="submit" disabled={disableInput}>
+            {disableInput ? "Please wait..." : "Submit"}
+          </button>
+        </div>
       </form>
     </>
   );

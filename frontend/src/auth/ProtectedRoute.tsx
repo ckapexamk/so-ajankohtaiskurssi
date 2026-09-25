@@ -1,31 +1,37 @@
 import React, { useEffect, useState } from "react";
-import { Navigate, Outlet } from "react-router";
+import { Navigate, Outlet, useNavigate } from "react-router";
 import { getToken, clearToken } from "../auth/token";
 import apiReq from "../api/client";
+import Header from "../auth/Header";
 
+export interface User {
+  id: string;
+  email: string;
+  display_name: string;
+}
 
 const ProtectedRoute: React.FC = (): React.ReactElement => {
-  const [auth, setAuth] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const [checkAuth, setCheckAuth] = useState(true);
+  const redirect = useNavigate();
 
   useEffect(() => {
     const authUser = async (): Promise<void> => {
-      const token = getToken();
     
-      if (!token) {
+      if (!getToken()) {
         setCheckAuth(false);
         return;
       }
 
       try {
-        await apiReq("/auth/me");
-        setAuth(true);
+        const currentUser = await apiReq<User>("/auth/me");
+        setUser(currentUser);
 
       } catch (error) {
         if (error instanceof Error && error.message.includes("401")) {
           clearToken();
         }
-        setAuth(false);
+        setUser(null);
 
       } finally {
         setCheckAuth(false);
@@ -35,15 +41,26 @@ const ProtectedRoute: React.FC = (): React.ReactElement => {
     authUser();
   }, []);
   
+  const logoutUser = (): void => {
+    clearToken();
+    setUser(null);
+    redirect("/login", { replace: true });
+  };
+
   if (checkAuth) {
     return <p>Authenticating...</p>;
   }
 
-  if (!auth) {
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  return <Outlet />;
+  return (
+    <>
+      <Header user={user} logout={logoutUser} />
+      <Outlet />
+    </>
+  )
 }
 
 export default ProtectedRoute;
