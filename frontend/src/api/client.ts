@@ -1,4 +1,4 @@
-import { getToken } from "./token";
+import { getToken } from "../auth/token";
 
 const apiUrl = import.meta.env.VITE_API_BASE_URL
 

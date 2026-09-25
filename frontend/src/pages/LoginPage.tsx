@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router";
 import { useState } from "react";
-import { setToken } from "../api/token";
+import { setToken } from "../auth/token";
 import apiReq from "../api/client";
 
 
