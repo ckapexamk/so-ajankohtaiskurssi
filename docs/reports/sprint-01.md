@@ -186,42 +186,6 @@ Skip stretch tickets you did not do. Stretch: Status, PR, and Used AI? for each 
   > Sections for prerequisites, installation, and URL-paths shown on readme.
 - **Used AI?** No
 
-### Stretch (only if you did them)
-
-For each stretch below that you completed: Status, PR / commit, Used AI? Add Demonstration only where steps are listed.
-
-#### S1-S1 — DB-aware health (if done)
-
-- **Status:**
-- **PR / commit:**
-- **Demonstration:**
-  1. **Do this:** With Compose up and Postgres reachable, open `http://localhost:8000/health/db` (or your documented path).
-  2. **Capture:** Screenshot of the JSON response.
-  3. **Must show:** Successful JSON indicating DB connectivity (not only process liveness).
-  4. **Must not show:** Connection strings with passwords.
-  5. **Save as:** `docs/reports/images/sprint-01/s1-s1-health-db.png`
-  6. **Caption (1–2 sentences):**
-- **Used AI?** Yes / No
-
-#### S1-S2 — Multi-stage API image (if done)
-
-- **Status:**
-- **PR / commit:**
-- **Used AI?** Yes / No
-
-#### S1-S3 — Smoke CI (if done)
-
-- **Status:**
-- **PR / commit:**
-- **Demonstration:**
-  1. **Do this:** Open the CI run on your Git host for the workflow that smoke-tests the API (or installs and runs a documented check).
-  2. **Capture:** Screenshot of a green / successful job.
-  3. **Must show:** Workflow name and success status for the smoke job.
-  4. **Must not show:** Secrets in logs.
-  5. **Save as:** `docs/reports/images/sprint-01/s1-s3-ci.png`
-  6. **Caption (1–2 sentences):**
-- **Used AI?** Yes / No
-
 ## How we(I) worked
 
 Sprint 1 is **two weeks**.
