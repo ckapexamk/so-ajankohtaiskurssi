@@ -1,14 +1,15 @@
-from uuid import UUID, uuid4
 from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.activity_type import ActivityType
+    from app.models.unit_type import UnitType
+
+from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, ForeignKey, Integer, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-
-if TYPE_CHECKING:
-    from app.models.activity_type import ActivityType
-    from app.models.unit_type import UnitType
 
 
 class ActivityTypeUnitType(Base):

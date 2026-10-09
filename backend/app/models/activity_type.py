@@ -1,37 +1,24 @@
-from uuid import UUID, uuid4
 from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.activity_type_unit_type import ActivityTypeUnitType
+
+from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, CheckConstraint, ForeignKey, Index, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
-if TYPE_CHECKING:
-    from app.models.activity_type_unit_type import ActivityTypeUnitType
-
 
 class ActivityType(Base):
     __tablename__ = "activity_types"
 
-    id: Mapped[UUID] = mapped_column(
-        primary_key=True,
-        default=uuid4,
-    )
+    id: Mapped[UUID] = mapped_column(primary_key=True,default=uuid4)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    slug: Mapped[str] = mapped_column(String(100), nullable=False)
 
-    name: Mapped[str] = mapped_column(
-        String(100),
-        nullable=False,
-    )
-
-    slug: Mapped[str] = mapped_column(
-        String(100),
-        nullable=False,
-    )
-
-    is_system: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        default=False,
+    is_system: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False,
         server_default=text("false"),
     )
 
