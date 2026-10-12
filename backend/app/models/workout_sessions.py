@@ -1,3 +1,7 @@
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app.models.workout_plan import WorkoutPlan
+
 from datetime import datetime
 from uuid import UUID, uuid4
 
@@ -11,7 +15,7 @@ from sqlalchemy import (
     Uuid,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
@@ -39,7 +43,6 @@ class WorkoutSession(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     intensity: Mapped[int | None] = mapped_column(nullable=True)
 
-    # Deferred migration until ticket 3
     plan_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("workout_plans.id", ondelete="SET NULL"),
         nullable=True,
@@ -55,6 +58,8 @@ class WorkoutSession(Base):
         server_default=func.now(),
         nullable=False,
     )
+
+    plan: Mapped["WorkoutPlan | None"] = relationship(back_populates="sessions")
 
     __table_args__ = (
         CheckConstraint(
