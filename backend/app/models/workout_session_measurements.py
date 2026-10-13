@@ -1,3 +1,8 @@
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.workout_session_items import WorkoutSessionItem
+
 from uuid import UUID, uuid4
 from decimal import Decimal
 
@@ -6,7 +11,7 @@ from sqlalchemy import (
     Uuid,
     Numeric,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
@@ -32,3 +37,7 @@ class WorkoutSessionMeasurements(Base):
     planned_value: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
     actual_value: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
     set_index: Mapped[int | None] = mapped_column(nullable=True)
+
+    session_item: Mapped["WorkoutSessionItem"] = relationship(
+    back_populates="measurements"
+)

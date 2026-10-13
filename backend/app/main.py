@@ -6,6 +6,7 @@ from app.admin import sqladmin
 
 from app.api.health import router as health_router
 from app.api.auth import router as auth_router
+from app.api.sessions import router as workout_session_router
 from app.core.config import get_settings
 from app.db.session import get_db
 
@@ -20,7 +21,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_allowlist,
     allow_credentials=False,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["GET", "POST", "OPTIONS", "PATCH", "DELETE"],
     allow_headers=["Content-Type", "Authorization"],
 )
 
@@ -31,4 +32,5 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(health_router)
+app.include_router(workout_session_router)
 sqladmin(app)

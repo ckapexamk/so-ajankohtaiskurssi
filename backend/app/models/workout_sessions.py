@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app.models.workout_plan import WorkoutPlan
+    from app.models.workout_session_items import WorkoutSessionItem
 
 from datetime import datetime
 from uuid import UUID, uuid4
@@ -60,6 +61,12 @@ class WorkoutSession(Base):
     )
 
     plan: Mapped["WorkoutPlan | None"] = relationship(back_populates="sessions")
+
+    items: Mapped[list["WorkoutSessionItem"]] = relationship(
+        back_populates="session",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
     __table_args__ = (
         CheckConstraint(
