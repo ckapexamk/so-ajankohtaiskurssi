@@ -42,4 +42,7 @@ class WorkoutPlan(Base):
         nullable=False,
     )
 
-    sessions: Mapped[list["WorkoutSession"]] = relationship(back_populates="plan")
+    sessions: Mapped[list["WorkoutSession"]] = relationship(
+        back_populates="plan",
+        order_by="WorkoutSession.session_at.asc().nulls_last()",
+    )

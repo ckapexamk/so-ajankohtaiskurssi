@@ -1,0 +1,120 @@
+from uuid import UUID
+
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
+
+from app.core.deps import get_current_user
+from app.db.session import get_db
+from app.models.user import User
+from app.schemas.session import PlanCreate, PlanRead, PlansRead
+from app.services.plans import (
+    PlanNotFoundError, SessionNotFoundError,
+    create_user_plan, get_user_plan, list_plans, delete_user_plan, attach_session, detach_session
+)
+
+router = APIRouter(
+    prefix="/plans",
+    tags=["plans"],
+)
+
+
+@router.post("/{plan_id}/sessions/{session_id}")
+def attach(
+    plan_id: UUID,
+    session_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        return attach_session(
+            db=db,
+            plan_id=plan_id,
+            session_id=session_id,
+            user_id=current_user.id,
+        )
+    except SessionNotFoundError:
+        raise HTTPException(status_code=404, detail="Session not found")
+    except PlanNotFoundError:
+        raise HTTPException(status_code=404, detail="Plan not found")
+
+
+@router.delete("/{plan_id}/sessions/{session_id}", status_code=204)
+def detach(
+    plan_id: UUID,
+    session_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        detach_session(
+            db=db,
+            plan_id=plan_id,
+            session_id=session_id,
+            user_id=current_user.id,
+        )
+    except SessionNotFoundError:
+        raise HTTPException(status_code=404, detail="Session not found")
+    except PlanNotFoundError:
+        raise HTTPException(status_code=404, detail="Plan not found")
+
+
+@router.post("", response_model=PlansRead, status_code=201)
+def post_plan(
+    payload: PlanCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:    
+        return create_user_plan(
+            db=db,
+            user_id=current_user.id,
+            plan_data=payload,
+        )
+    except PlanNotFoundError:
+        raise HTTPException(status_code=404, detail="Plan not found")
+
+
+@router.get("", response_model=list[PlansRead])
+def get_plans(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:    
+        return list_plans(
+            db=db,
+            user_id=current_user.id,
+        )
+    except PlanNotFoundError:
+        raise HTTPException(status_code=404, detail="Plan not found")
+
+
+@router.get("/{plan_id}", response_model=PlanRead)
+def get_plan(
+    plan_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:    
+        return get_user_plan(
+            db=db,
+            plan_id=plan_id,
+            user_id=current_user.id,
+        )
+    except PlanNotFoundError:
+        raise HTTPException(status_code=404, detail="Plan not found")
+
+
+@router.delete("/{plan_id}", status_code=204)
+def delete_plan(
+    plan_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:    
+        return delete_user_plan(
+            db=db,
+            plan_id=plan_id,
+            user_id=current_user.id,
+        )
+    except PlanNotFoundError:
+        raise HTTPException(status_code=404, detail="Plan not found")

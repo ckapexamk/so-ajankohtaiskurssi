@@ -1,3 +1,4 @@
+from datetime import date
 from datetime import datetime
 from decimal import Decimal
 from typing import Literal
@@ -42,6 +43,12 @@ class SessionCreate(BaseModel):
     plan_id: UUID | None = None
     items: list[ItemCreate] = Field(default_factory=list)
 
+class PlanCreate(BaseModel):
+    name: str
+    notes: str | None = None
+    start_date: date | None = None
+    length_weeks: int | None = None
+
 # Read GET
 class MeasurementRead(BaseModel):
     model_config = {"from_attributes": True}
@@ -74,6 +81,20 @@ class SessionRead(BaseModel):
     plan_id: UUID | None
     created_at: datetime
     items: list[ItemRead] = Field(default_factory=list)
+
+class PlansRead(BaseModel):
+    model_config = {"from_attributes": True}
+
+    id: UUID
+    user_id: UUID
+    name: str
+    notes: str | None = None
+    start_date: date | None = None
+    length_weeks: int | None = None
+
+
+class PlanRead(PlansRead):
+    sessions: list[SessionRead] = Field(default_factory=list)
 
 # Update PATCH
 class SessionUpdate(BaseModel):

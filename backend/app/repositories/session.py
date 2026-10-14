@@ -8,7 +8,7 @@ from app.models.workout_sessions import WorkoutSession
 from app.models.workout_session_items import WorkoutSessionItem
 from app.models.workout_session_measurements import WorkoutSessionMeasurements
 from app.models.workout_plan import WorkoutPlan
-from app.schemas.session import SessionCreate, SessionUpdate, ItemCreate
+from app.schemas.session import PlanCreate, SessionCreate, SessionUpdate, ItemCreate
 
 
 def build_items(items_data: list[ItemCreate]) -> list[WorkoutSessionItem]:
@@ -37,6 +37,51 @@ def find_owned_plan(
             WorkoutPlan.user_id == user_id,
         )
     )
+
+
+def create_plan(
+    db: Session,
+    user_id: UUID,
+    data: PlanCreate,
+) -> WorkoutPlan:
+    plan = WorkoutPlan(
+        user_id=user_id,
+        name=data.name,
+        notes=data.notes,
+        start_date=data.start_date,
+        length_weeks=data.length_weeks,
+    )
+    db.add(plan)
+    db.flush()
+    return plan
+
+
+def find_user_plans(
+    db: Session,
+    user_id: UUID,
+) -> list[WorkoutPlan]:
+    statement = (
+        select(WorkoutPlan)
+        .where(WorkoutPlan.user_id == user_id)
+        .order_by(WorkoutPlan.name)
+    )
+    return list(db.scalars(statement).all())
+
+
+def find_user_plan(
+    db: Session,
+    plan_id: UUID,
+    user_id: UUID,
+) -> WorkoutPlan | None:
+    statement = (
+        select(WorkoutPlan)
+        .options(selectinload(WorkoutPlan.sessions))
+        .where(
+            WorkoutPlan.id == plan_id,
+            WorkoutPlan.user_id == user_id,
+        )
+    )
+    return db.scalar(statement)
 
 
 #List/Find
@@ -176,3 +221,21 @@ def delete_workout(
     db.flush()
     return True
 
+
+def delete_plan(
+    db: Session,
+    plan_id: UUID,
+    user_id: UUID,
+) -> bool:
+    plan = db.scalar(
+        select(WorkoutPlan).where(
+            WorkoutPlan.id == plan_id,
+            WorkoutPlan.user_id == user_id,
+        )
+    )
+    if plan is None:
+        return False
+
+    db.delete(plan)
+    db.flush()
+    return True
