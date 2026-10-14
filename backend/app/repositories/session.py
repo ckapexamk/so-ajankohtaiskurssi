@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -42,17 +43,41 @@ def find_owned_plan(
 def find_workouts(
     db: Session,
     user_id: UUID,
+    from_: datetime | None = None,
+    to: datetime | None = None,
+    status: str | None = None,
+    activity_type_id: UUID | None = None,
+    unscheduled: bool | None = None,
+    plan_id: UUID | None = None,
 ) -> list[WorkoutSession]:
     statement = (
         select(WorkoutSession)
-        .options(
-            selectinload(WorkoutSession.items).selectinload(
-                WorkoutSessionItem.measurements
+            .options(
+                selectinload(WorkoutSession.items)
+                .selectinload(WorkoutSessionItem.measurements)
             )
-        )
-        .where(WorkoutSession.user_id == user_id)
-        .order_by(WorkoutSession.session_at.asc().nulls_last())
+            .where(WorkoutSession.user_id == user_id)
+            .order_by(WorkoutSession.session_at.asc().nulls_last())
     )
+
+    if from_ is not None:
+        statement = statement.where(WorkoutSession.session_at >= from_)
+
+    if to is not None:
+        statement = statement.where(WorkoutSession.session_at <= to)
+
+    if status is not None:
+        statement = statement.where(WorkoutSession.status == status)
+
+    if activity_type_id is not None:
+        statement = statement.where(WorkoutSession.items.any(activity_type_id))
+
+    if unscheduled is not None:
+        statement = statement.where(WorkoutSession.session_at is None)
+
+    if plan_id is not None:
+        statement = statement.where(WorkoutSession.plan_id == plan_id)
+
     return list(db.scalars(statement).all())
 
 

@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -38,8 +39,27 @@ def validate_measurements(db, items):
                 raise MeasurementError("A set index is required for per-set measurements")
 
 
-def find_user_workouts(db: Session, user_id: UUID) -> list[WorkoutSession]:
-    return find_workouts(db, user_id)
+def find_user_workouts(
+    db: Session,
+    user_id: UUID,
+    from_: datetime | None = None,
+    to: datetime | None = None,
+    status: str | None = None,
+    activity_type_id: UUID | None = None,
+    unscheduled: bool | None = None,
+    plan_id: UUID | None = None,
+) -> list[WorkoutSession]:
+
+    return find_workouts(
+        db,
+        user_id,
+        from_,
+        to,
+        status,
+        activity_type_id,
+        unscheduled,
+        plan_id,
+    )
 
 
 def find_user_workout(db: Session, session_id: UUID, user_id: UUID) -> WorkoutSession:

@@ -1,6 +1,7 @@
+from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user
@@ -39,12 +40,27 @@ def post_session(
 
 @router.get("", response_model=list[SessionRead])
 def list_sessions(
+    from_: datetime | None = Query(None, alias="from"),
+    to: datetime | None = None,
+    status: str | None = None,
+    activity_type_id: UUID | None = None,
+    unscheduled: bool | None = None,
+    plan_id: UUID | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    if from_ is not None and to is not None and from_ > to:
+        raise HTTPException(status_code=400, detail="Invalid date range")
+
     return find_user_workouts(
         db=db,
         user_id=current_user.id,
+        from_=from_,
+        to=to,
+        status=status,
+        activity_type_id=activity_type_id,
+        unscheduled=unscheduled,
+        plan_id=plan_id,
     )
     
 
