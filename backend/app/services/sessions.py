@@ -1,9 +1,11 @@
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.schemas.session import SessionCreate, SessionUpdate
 from app.models.workout_sessions import WorkoutSession
+from app.models.activity_type_unit_type import ActivityTypeUnitType
 from app.repositories.session import ( 
     create_workout, update_workout, delete_workout,
     find_workouts, find_workout, find_owned_plan,
@@ -14,6 +16,26 @@ class SessionNotFoundError(Exception):
 
 class PlanNotFoundError(Exception):
     pass
+
+class MeasurementError(Exception):
+    pass
+
+
+def validate_measurements(db, items):
+    for item in items:
+        for measurement in item.measurements:
+            link = db.scalar(
+                select(ActivityTypeUnitType).where(
+                    ActivityTypeUnitType.activity_type_id == item.activity_type_id,
+                    ActivityTypeUnitType.unit_type_id == measurement.unit_type_id,
+                )
+            )
+
+            if link is None:
+                raise MeasurementError("Activity type and unit type are not linked.")
+
+            if link.per_set and measurement.set_index is None:
+                raise MeasurementError("A set index is required for per-set measurements")
 
 
 def find_user_workouts(db: Session, user_id: UUID) -> list[WorkoutSession]:
@@ -28,7 +50,9 @@ def find_user_workout(db: Session, session_id: UUID, user_id: UUID) -> WorkoutSe
 
 
 def create_workout_session(db: Session, user_id: UUID, session_data: SessionCreate) -> WorkoutSession:
-    if session_data.plan_id is not None:
+    validate_measurements(db, session_data.items)
+
+    if session_data.plan_id is not None: 
         plan = find_owned_plan(db, session_data.plan_id, user_id)
         if plan is None:
             raise PlanNotFoundError()
@@ -44,6 +68,10 @@ def create_workout_session(db: Session, user_id: UUID, session_data: SessionCrea
 
 
 def update_workout_session(db: Session, session_id: UUID, user_id: UUID, patch: SessionUpdate) -> WorkoutSession:
+    
+    if "items" in patch.model_fields_set:
+        validate_measurements(db, patch.items)
+    
     if "plan_id" in patch.model_fields_set and patch.plan_id is not None:
         plan = find_owned_plan(db, patch.plan_id, user_id)
         if plan is None:

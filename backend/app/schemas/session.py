@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 SessionStatus = Literal["planned", "in_progress", "completed"]
@@ -15,6 +15,12 @@ class MeasurementCreate(BaseModel):
     planned_value: Decimal | None = None
     actual_value: Decimal | None = None
     set_index: int | None = None
+
+    @model_validator(mode="after")
+    def require_value(self):
+        if self.planned_value is None and self.actual_value is None:
+            raise ValueError("Add a planned or actual value.")
+        return self
 
 class ItemCreate(BaseModel):
     activity_type_id: UUID

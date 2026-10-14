@@ -8,8 +8,9 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.session import SessionCreate, SessionUpdate, SessionRead
 from app.services.sessions import (
-    SessionNotFoundError, PlanNotFoundError, find_user_workout, find_user_workouts,
-    create_workout_session, update_workout_session, delete_workout_session
+    SessionNotFoundError, PlanNotFoundError, MeasurementError,
+    create_workout_session, update_workout_session, delete_workout_session,
+    find_user_workout, find_user_workouts,
 )
 
 router = APIRouter(
@@ -32,6 +33,8 @@ def post_session(
         )
     except PlanNotFoundError:
         raise HTTPException(status_code=404, detail="Plan not found")
+    except MeasurementError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.get("", response_model=list[SessionRead])
@@ -79,6 +82,8 @@ def patch_session(
         raise HTTPException(status_code=404, detail="Session not found")
     except PlanNotFoundError:
         raise HTTPException(status_code=404, detail="Plan not found")
+    except MeasurementError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.delete("/{session_id}", status_code=204)
