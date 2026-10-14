@@ -5,6 +5,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.schemas.session import SessionCreate, SessionUpdate
+from app.models.workout_session_items import WorkoutSessionItem
+from app.models.workout_session_measurements import WorkoutSessionMeasurements
 from app.models.workout_sessions import WorkoutSession
 from app.models.activity_type_unit_type import ActivityTypeUnitType
 from app.repositories.session import ( 
@@ -108,6 +110,53 @@ def update_workout_session(db: Session, session_id: UUID, user_id: UUID, patch: 
     
     db.commit()
     return session
+
+
+def clone_workout_session(db, session_id, user_id, data):
+    source = find_workout(db, session_id, user_id)
+
+    if source is None:
+        raise SessionNotFoundError()
+
+    if data.plan_id is not None:
+        plan = find_owned_plan(db, data.plan_id, user_id)
+        if plan is None:
+            raise PlanNotFoundError()
+
+    new_items = [
+        WorkoutSessionItem(
+            activity_type_id=item.activity_type_id,
+            sort_order=item.sort_order,
+            notes=item.notes,
+            measurements=[
+                WorkoutSessionMeasurements(
+                    unit_type_id=measurement.unit_type_id,
+                    planned_value=measurement.planned_value,
+                    actual_value=None,
+                    set_index=measurement.set_index,
+                )
+                for measurement in item.measurements
+            ],
+        )
+        for item in source.items
+    ]
+
+    clone = WorkoutSession(
+        user_id=user_id,
+        name=(data.name if data.name is not None
+            else source.name
+        ),
+        session_at=(data.session_at if data.session_at is not None
+            else source.session_at
+        ),
+        plan_id=data.plan_id,
+        source_session_id=source.id,
+        items=new_items,
+    )
+
+    db.add(clone)
+    db.commit()
+    return clone
 
 
 def delete_workout_session(db: Session, session_id: UUID, user_id: UUID) -> None:

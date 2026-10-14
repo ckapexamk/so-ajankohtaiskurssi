@@ -9,8 +9,6 @@ from app.models.activity_type import ActivityType
 from app.models.unit_type import UnitType
 from app.models.activity_type_unit_type import ActivityTypeUnitType
 from app.models.workout_sessions import WorkoutSession
-from app.models.workout_session_items import WorkoutSessionItem
-from app.models.workout_session_measurements import WorkoutSessionMeasurements
 from app.models.workout_plan import WorkoutPlan
 
 settings = get_settings()
@@ -39,6 +37,28 @@ class ActivityTypeUnitTypeAdmin(ModelView, model=ActivityTypeUnitType):
         ActivityTypeUnitType.is_required,
         ActivityTypeUnitType.per_set,
     ]
+
+class WorkoutSessionAdmin(ModelView, model=WorkoutSession):
+    column_list = [
+        WorkoutSession.user_id,
+        WorkoutSession.name,
+        WorkoutSession.session_at,
+        WorkoutSession.status,
+        WorkoutSession.intensity,
+        WorkoutSession.plan_id,
+        WorkoutSession.items,
+    ]
+
+class WorkoutPlanAdmin(ModelView, model=WorkoutPlan):
+    column_list = [
+        WorkoutPlan.user_id,
+        WorkoutPlan.name,
+        WorkoutPlan.notes,
+        WorkoutPlan.start_date,
+        WorkoutPlan.length_weeks,
+        WorkoutPlan.created_at,
+        WorkoutPlan.sessions,
+]
 
 class AdminAuth(AuthenticationBackend):
     async def login(self, request: Request) -> bool:
@@ -69,3 +89,5 @@ def sqladmin(app) -> None:
     admin.add_view(ActivityTypeAdmin)
     admin.add_view(UnitTypeAdmin)
     admin.add_view(ActivityTypeUnitTypeAdmin)
+    admin.add_view(WorkoutSessionAdmin)
+    admin.add_view(WorkoutPlanAdmin)

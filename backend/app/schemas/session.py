@@ -10,6 +10,11 @@ SessionStatus = Literal["planned", "in_progress", "completed"]
 
 
 # Create POST
+class SessionClone(BaseModel):
+    session_at: datetime | None = None
+    name: str | None = None
+    plan_id: UUID | None = None
+
 class MeasurementCreate(BaseModel):
     unit_type_id: UUID
     planned_value: Decimal | None = None

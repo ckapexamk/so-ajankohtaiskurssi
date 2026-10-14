@@ -7,11 +7,11 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_current_user
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.session import SessionCreate, SessionUpdate, SessionRead
+from app.schemas.session import SessionCreate, SessionUpdate, SessionRead, SessionClone
 from app.services.sessions import (
     SessionNotFoundError, PlanNotFoundError, MeasurementError,
     create_workout_session, update_workout_session, delete_workout_session,
-    find_user_workout, find_user_workouts,
+    clone_workout_session, find_user_workout, find_user_workouts,
 )
 
 router = APIRouter(
@@ -32,6 +32,28 @@ def post_session(
             user_id=current_user.id,
             session_data=payload,
         )
+    except PlanNotFoundError:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    except MeasurementError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/{session_id}/clone", response_model=SessionRead, status_code=201)
+def clone_session(
+    session_id: UUID,
+    payload: SessionClone,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:    
+        return clone_workout_session(
+            db=db,
+            session_id=session_id,
+            user_id=current_user.id,
+            data=payload or SessionClone(),
+        )
+    except SessionNotFoundError:
+        raise HTTPException(status_code=404, detail="Session not found")
     except PlanNotFoundError:
         raise HTTPException(status_code=404, detail="Plan not found")
     except MeasurementError as exc:
