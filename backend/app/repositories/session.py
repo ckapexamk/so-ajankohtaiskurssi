@@ -181,3 +181,18 @@ def delete_workout(
 ) -> None:
     db.delete(workout)
     db.flush()
+
+# Calendar
+def find_calendar_sessions(db, user_id, from_, to, plan_id=None):
+    statement = select(WorkoutSession).where(
+        WorkoutSession.user_id == user_id,
+        WorkoutSession.session_at.is_not(None),
+        WorkoutSession.session_at >= from_,
+        WorkoutSession.session_at <= to,
+    )
+
+    if plan_id is not None:
+        statement = statement.where(WorkoutSession.plan_id == plan_id)
+
+    statement = statement.order_by(WorkoutSession.session_at.asc())
+    return list(db.scalars(statement).all())

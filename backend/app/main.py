@@ -10,6 +10,7 @@ from app.api.sessions import router as workout_session_router
 from app.api.plans import router as workout_plan_router
 from app.api.activity_type import router as activity_router
 from app.api.goals import router as goals_router
+from app.api.calendar import router as calendar_router
 from app.core.config import get_settings
 from app.db.session import get_db
 
@@ -39,4 +40,5 @@ app.include_router(workout_session_router)
 app.include_router(workout_plan_router)
 app.include_router(activity_router)
 app.include_router(goals_router)
+app.include_router(calendar_router)
 sqladmin(app)
