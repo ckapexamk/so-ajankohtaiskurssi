@@ -7,19 +7,13 @@ from app.models.workout_sessions import WorkoutSession
 from app.schemas.session import PlanCreate
 from app.repositories.session import (
     create_plan,
-    delete_plan,
-    find_owned_plan,
-    find_user_plan,
     find_user_plans,
-    find_workout,
 )
-
-
-class PlanNotFoundError(Exception):
-    pass
-
-class SessionNotFoundError(Exception):
-    pass
+from app.services.ownership import (
+    SessionNotFoundError,
+    get_owned_plan,
+    get_owned_workout,
+)
 
 
 def attach_session(
@@ -28,13 +22,8 @@ def attach_session(
     session_id: UUID,
     user_id: UUID,
 ) -> WorkoutSession:
-    plan = find_owned_plan(db, plan_id, user_id)
-    session = find_workout(db, session_id, user_id)
-
-    if plan is None:
-        raise PlanNotFoundError()
-    if session is None:
-        raise SessionNotFoundError()
+    plan = get_owned_plan(db, plan_id, user_id)
+    session = get_owned_workout(db, session_id, user_id)
 
     session.plan_id = plan.id
     db.commit()
@@ -47,12 +36,9 @@ def detach_session(
     session_id: UUID,
     user_id: UUID,
 ) -> WorkoutSession:
-    plan = find_owned_plan(db, plan_id, user_id)
-    session = find_workout(db, session_id, user_id)
-
-    if plan is None:
-        raise PlanNotFoundError()
-    if session is None or session.plan_id != plan.id:
+    plan = get_owned_plan(db, plan_id, user_id)
+    session = get_owned_workout(db, session_id, user_id)
+    if session.plan_id != plan.id:
         raise SessionNotFoundError()
 
     session.plan_id = None
@@ -79,10 +65,7 @@ def get_user_plan(
     plan_id: UUID,
     user_id: UUID,
 ) -> WorkoutPlan:
-    plan = find_user_plan(db, plan_id, user_id)
-    if plan is None:
-        raise PlanNotFoundError()
-    return plan
+    return get_owned_plan(db, plan_id, user_id)
 
 
 def delete_user_plan(
@@ -90,12 +73,6 @@ def delete_user_plan(
     plan_id: UUID,
     user_id: UUID,
 ) -> None:
-    deleted = delete_plan(
-        db=db,
-        plan_id=plan_id,
-        user_id=user_id
-    )
-    if not deleted:
-        raise PlanNotFoundError()
-
+    plan = get_owned_plan(db, plan_id, user_id)
+    db.delete(plan)
     db.commit()

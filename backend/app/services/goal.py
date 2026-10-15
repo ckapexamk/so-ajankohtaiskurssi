@@ -4,12 +4,14 @@ from sqlalchemy.orm import Session
 
 from app.models.unit_type import UnitType
 from app.models.goal import Goal
-from app.repositories.goal import create_goal, update_goal, find_goal, find_goals, delete_goal
+from app.repositories.goal import (
+    create_goal,
+    delete_goal,
+    find_goals,
+    update_goal,
+)
 from app.schemas.goal import GoalCreate, GoalUpdate
-
-
-class GoalNotFoundError(Exception):
-    pass
+from app.services.ownership import get_owned_goal
 
 
 class UnitTypeNotFoundError(Exception):
@@ -32,10 +34,7 @@ def list_user_goals(
 
 
 def get_user_goal(db: Session, goal_id: UUID, user_id: UUID) -> Goal:
-    goal = find_goal(db, goal_id, user_id)
-    if goal is None:
-        raise GoalNotFoundError()
-    return goal
+    return get_owned_goal(db, goal_id, user_id)
 
 
 def create_user_goal(
@@ -58,23 +57,17 @@ def update_user_goal(
 ) -> Goal:
     changes = patch.model_dump(exclude_unset=True)
 
-    existing_goal = find_goal(db, goal_id, user_id)
-    if existing_goal is None:
-        raise GoalNotFoundError()
+    existing_goal = get_owned_goal(db, goal_id, user_id)
 
     if "unit_type_id" in changes:
         validate_unit_type(db, changes["unit_type_id"])
 
-    goal = update_goal(db, goal_id, user_id, changes)
-    if goal is None:
-        raise GoalNotFoundError()
-
+    goal = update_goal(db, existing_goal, changes)
     db.commit()
     return goal
 
 
 def delete_user_goal(db: Session, goal_id: UUID, user_id: UUID) -> None:
-    deleted = delete_goal(db, goal_id, user_id)
-    if not deleted:
-        raise GoalNotFoundError()
+    goal = get_owned_goal(db, goal_id, user_id)
+    delete_goal(db, goal)
     db.commit()

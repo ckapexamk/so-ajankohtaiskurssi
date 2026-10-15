@@ -7,8 +7,8 @@ from app.core.deps import get_current_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.goal import GoalCreate, GoalRead, GoalUpdate
+from app.services.ownership import GoalNotFoundError
 from app.services.goal import (
-    GoalNotFoundError,
     UnitTypeNotFoundError,
     create_user_goal,
     delete_user_goal,
@@ -18,8 +18,8 @@ from app.services.goal import (
 )
 
 router = APIRouter(
-    prefix="/goals",
-    tags=["goals"],
+    prefix="/goal",
+    tags=["goal"],
 )
 
 
@@ -53,7 +53,7 @@ def get_goal(
     try:
         return get_user_goal(db, goal_id, current_user.id)
     except GoalNotFoundError as exc:
-        raise HTTPException(status_code=404, detail="Goal not found") from exc
+        raise HTTPException(status_code=404, detail="Not found") from exc
 
 
 @router.patch("/{goal_id}", response_model=GoalRead)
@@ -66,7 +66,7 @@ def patch_goal(
     try:
         return update_user_goal(db, goal_id, current_user.id, payload)
     except GoalNotFoundError as exc:
-        raise HTTPException(status_code=404, detail="Goal not found") from exc
+        raise HTTPException(status_code=404, detail="Not found") from exc
     except UnitTypeNotFoundError as exc:
         raise HTTPException(status_code=422, detail="Invalid unit_type_id") from exc
 
@@ -80,5 +80,5 @@ def remove_goal(
     try:
         delete_user_goal(db, goal_id, current_user.id)
     except GoalNotFoundError as exc:
-        raise HTTPException(status_code=404, detail="Goal not found") from exc
+        raise HTTPException(status_code=404, detail="Not found") from exc
     return Response(status_code=204)

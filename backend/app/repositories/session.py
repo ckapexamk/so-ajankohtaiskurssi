@@ -26,19 +26,6 @@ def build_items(items_data: list[ItemCreate]) -> list[WorkoutSessionItem]:
     ]
 
 
-def find_owned_plan(
-    db: Session,
-    plan_id: UUID,
-    user_id: UUID,
-) -> WorkoutPlan | None:
-    return db.scalar(
-        select(WorkoutPlan).where(
-            WorkoutPlan.id == plan_id,
-            WorkoutPlan.user_id == user_id,
-        )
-    )
-
-
 def create_plan(
     db: Session,
     user_id: UUID,
@@ -170,24 +157,9 @@ def create_workout(
 #Update
 def update_workout(
     db: Session,
-    session_id: UUID,
-    user_id: UUID,
+    workout: WorkoutSession,
     patch: SessionUpdate,
-) -> WorkoutSession | None:
-    workout = db.scalar(
-        select(WorkoutSession)
-        .options(
-            selectinload(WorkoutSession.items).selectinload(
-                WorkoutSessionItem.measurements
-            )
-        )
-        .where(
-            WorkoutSession.id == session_id,
-            WorkoutSession.user_id == user_id,
-        )
-    )
-    if workout is None:
-        return None
+) -> WorkoutSession:
   
     changes = patch.model_dump(exclude_unset=True)
     items_data = changes.pop("items", None)
@@ -205,37 +177,7 @@ def update_workout(
 #Delete
 def delete_workout(
     db: Session,
-    session_id: UUID,
-    user_id: UUID,
-) -> bool:
-    workout = db.scalar(
-        select(WorkoutSession).where(
-            WorkoutSession.id == session_id,
-            WorkoutSession.user_id == user_id,
-        )
-    )
-    if workout is None:
-        return False
-
+    workout: WorkoutSession,
+) -> None:
     db.delete(workout)
     db.flush()
-    return True
-
-
-def delete_plan(
-    db: Session,
-    plan_id: UUID,
-    user_id: UUID,
-) -> bool:
-    plan = db.scalar(
-        select(WorkoutPlan).where(
-            WorkoutPlan.id == plan_id,
-            WorkoutPlan.user_id == user_id,
-        )
-    )
-    if plan is None:
-        return False
-
-    db.delete(plan)
-    db.flush()
-    return True

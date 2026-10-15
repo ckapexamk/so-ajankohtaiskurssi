@@ -11,14 +11,10 @@ from app.models.workout_sessions import WorkoutSession
 from app.models.activity_type_unit_type import ActivityTypeUnitType
 from app.repositories.session import ( 
     create_workout, update_workout, delete_workout,
-    find_workouts, find_workout, find_owned_plan,
+    find_workouts,
 )
+from app.services.ownership import get_owned_plan, get_owned_workout
 
-class SessionNotFoundError(Exception):
-    pass
-
-class PlanNotFoundError(Exception):
-    pass
 
 class MeasurementError(Exception):
     pass
@@ -65,19 +61,14 @@ def find_user_workouts(
 
 
 def find_user_workout(db: Session, session_id: UUID, user_id: UUID) -> WorkoutSession:
-    session = find_workout(db, session_id, user_id)
-    if session is None:
-        raise SessionNotFoundError()
-    return session
+    return get_owned_workout(db, session_id, user_id)
 
 
 def create_workout_session(db: Session, user_id: UUID, session_data: SessionCreate) -> WorkoutSession:
     validate_measurements(db, session_data.items)
 
     if session_data.plan_id is not None: 
-        plan = find_owned_plan(db, session_data.plan_id, user_id)
-        if plan is None:
-            raise PlanNotFoundError()
+        get_owned_plan(db, session_data.plan_id, user_id)
         
     session = create_workout(
         db=db,
@@ -90,38 +81,29 @@ def create_workout_session(db: Session, user_id: UUID, session_data: SessionCrea
 
 
 def update_workout_session(db: Session, session_id: UUID, user_id: UUID, patch: SessionUpdate) -> WorkoutSession:
-    
+    session = get_owned_workout(db, session_id, user_id)
+
     if "items" in patch.model_fields_set:
         validate_measurements(db, patch.items)
     
     if "plan_id" in patch.model_fields_set and patch.plan_id is not None:
-        plan = find_owned_plan(db, patch.plan_id, user_id)
-        if plan is None:
-            raise PlanNotFoundError()
+        get_owned_plan(db, patch.plan_id, user_id)
     
     session = update_workout(
         db=db,
-        session_id=session_id,
-        user_id=user_id,
+        workout=session,
         patch=patch
     )
-    if session is None:
-        raise SessionNotFoundError()
     
     db.commit()
     return session
 
 
 def clone_workout_session(db, session_id, user_id, data):
-    source = find_workout(db, session_id, user_id)
-
-    if source is None:
-        raise SessionNotFoundError()
+    source = get_owned_workout(db, session_id, user_id)
 
     if data.plan_id is not None:
-        plan = find_owned_plan(db, data.plan_id, user_id)
-        if plan is None:
-            raise PlanNotFoundError()
+        get_owned_plan(db, data.plan_id, user_id)
 
     new_items = [
         WorkoutSessionItem(
@@ -160,12 +142,6 @@ def clone_workout_session(db, session_id, user_id, data):
 
 
 def delete_workout_session(db: Session, session_id: UUID, user_id: UUID) -> None:
-    deleted = delete_workout(
-        db=db,
-        session_id=session_id,
-        user_id=user_id
-    )
-    if not deleted:
-        raise SessionNotFoundError()
-
+    session = get_owned_workout(db, session_id, user_id)
+    delete_workout(db=db, workout=session)
     db.commit()

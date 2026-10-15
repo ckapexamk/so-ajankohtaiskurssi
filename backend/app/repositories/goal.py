@@ -44,14 +44,9 @@ def create_goal(db: Session, user_id: UUID, data: GoalCreate) -> Goal:
 
 def update_goal(
     db: Session,
-    goal_id: UUID,
-    user_id: UUID,
+    goal: Goal,
     changes: dict,
-) -> Goal | None:
-    goal = find_goal(db, goal_id, user_id)
-    if goal is None:
-        return None
-
+) -> Goal:
     for field, value in changes.items():
         setattr(goal, field, value)
 
@@ -59,11 +54,6 @@ def update_goal(
     return goal
 
 
-def delete_goal(db: Session, goal_id: UUID, user_id: UUID) -> bool:
-    goal = find_goal(db, goal_id, user_id)
-    if goal is None:
-        return False
-
+def delete_goal(db: Session, goal: Goal) -> None:
     db.delete(goal)
     db.flush()
-    return True

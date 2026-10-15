@@ -8,8 +8,9 @@ from app.core.deps import get_current_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.session import SessionCreate, SessionUpdate, SessionRead, SessionClone
+from app.services.ownership import SessionNotFoundError, PlanNotFoundError
 from app.services.sessions import (
-    SessionNotFoundError, PlanNotFoundError, MeasurementError,
+    MeasurementError,
     create_workout_session, update_workout_session, delete_workout_session,
     clone_workout_session, find_user_workout, find_user_workouts,
 )
@@ -33,7 +34,7 @@ def post_session(
             session_data=payload,
         )
     except PlanNotFoundError:
-        raise HTTPException(status_code=404, detail="Plan not found")
+        raise HTTPException(status_code=404, detail="Not found")
     except MeasurementError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
@@ -53,9 +54,9 @@ def clone_session(
             data=payload or SessionClone(),
         )
     except SessionNotFoundError:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="Not found")
     except PlanNotFoundError:
-        raise HTTPException(status_code=404, detail="Plan not found")
+        raise HTTPException(status_code=404, detail="Not found")
     except MeasurementError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
@@ -99,7 +100,7 @@ def get_session(
             user_id=current_user.id,
         )
     except SessionNotFoundError:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="Not found")
 
 
 @router.patch("/{session_id}", response_model=SessionRead, status_code=200)
@@ -117,9 +118,9 @@ def patch_session(
             patch=payload,
         )
     except SessionNotFoundError:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="Not found")
     except PlanNotFoundError:
-        raise HTTPException(status_code=404, detail="Plan not found")
+        raise HTTPException(status_code=404, detail="Not found")
     except MeasurementError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
@@ -137,4 +138,4 @@ def delete_session(
             user_id=current_user.id,
         )
     except SessionNotFoundError:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="Not found")

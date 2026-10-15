@@ -7,8 +7,8 @@ from app.core.deps import get_current_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.session import PlanCreate, PlanRead, PlansRead
+from app.services.ownership import PlanNotFoundError, SessionNotFoundError
 from app.services.plans import (
-    PlanNotFoundError, SessionNotFoundError,
     create_user_plan, get_user_plan, list_plans, delete_user_plan, attach_session, detach_session
 )
 
@@ -33,9 +33,9 @@ def attach(
             user_id=current_user.id,
         )
     except SessionNotFoundError:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="Not found")
     except PlanNotFoundError:
-        raise HTTPException(status_code=404, detail="Plan not found")
+        raise HTTPException(status_code=404, detail="Not found")
 
 
 @router.delete("/{plan_id}/sessions/{session_id}", status_code=204)
@@ -53,9 +53,9 @@ def detach(
             user_id=current_user.id,
         )
     except SessionNotFoundError:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="Not found")
     except PlanNotFoundError:
-        raise HTTPException(status_code=404, detail="Plan not found")
+        raise HTTPException(status_code=404, detail="Not found")
 
 
 @router.post("", response_model=PlansRead, status_code=201)
@@ -71,7 +71,7 @@ def post_plan(
             plan_data=payload,
         )
     except PlanNotFoundError:
-        raise HTTPException(status_code=404, detail="Plan not found")
+        raise HTTPException(status_code=404, detail="Not found")
 
 
 @router.get("", response_model=list[PlansRead])
@@ -85,7 +85,7 @@ def get_plans(
             user_id=current_user.id,
         )
     except PlanNotFoundError:
-        raise HTTPException(status_code=404, detail="Plan not found")
+        raise HTTPException(status_code=404, detail="Not found")
 
 
 @router.get("/{plan_id}", response_model=PlanRead)
@@ -101,7 +101,7 @@ def get_plan(
             user_id=current_user.id,
         )
     except PlanNotFoundError:
-        raise HTTPException(status_code=404, detail="Plan not found")
+        raise HTTPException(status_code=404, detail="Not found")
 
 
 @router.delete("/{plan_id}", status_code=204)
@@ -111,10 +111,10 @@ def delete_plan(
     current_user: User = Depends(get_current_user),
 ):
     try:    
-        return delete_user_plan(
+        delete_user_plan(
             db=db,
             plan_id=plan_id,
             user_id=current_user.id,
         )
     except PlanNotFoundError:
-        raise HTTPException(status_code=404, detail="Plan not found")
+        raise HTTPException(status_code=404, detail="Not found")
