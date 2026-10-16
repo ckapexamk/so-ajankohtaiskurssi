@@ -28,7 +28,7 @@ const formatDate = (sessionAt: string | null): string => {
 };
 
 const SessionsPage: React.FC = (): React.ReactElement => {
-    const [searchParams, setSearchParams] = useSearchParams();
+    const [searchParams] = useSearchParams();
     
     const filters = {
         from: searchParams.get("from") ?? "",
@@ -74,6 +74,9 @@ const SessionsPage: React.FC = (): React.ReactElement => {
   return (
     <section>
       <h1>Sessions</h1>
+      <p>
+        <Link to="/sessions/new">Create session</Link>
+      </p>
 
       {sessions.data.length === 0 ? (
         <p>No sessions.</p>

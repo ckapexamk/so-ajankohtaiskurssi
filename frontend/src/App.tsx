@@ -7,6 +7,7 @@ import HomePage from "./pages/HomePage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import SessionsPage from "./pages/SessionsPage";
+import SessionsFormPage from "./pages/SessionFormPage";
 
 const App : React.FC = () : React.ReactElement => {
   return (
@@ -18,6 +19,7 @@ const App : React.FC = () : React.ReactElement => {
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/sessions" element={<SessionsPage />} />
+          <Route path="/sessions/new" element={<SessionsFormPage />} />
         </Route>
       </Routes>
     </>
