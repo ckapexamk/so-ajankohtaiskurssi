@@ -40,7 +40,7 @@ const LoginPage: React.FC = (): React.ReactElement => {
       });
 
       setToken(login.access_token);
-      redirect("/");
+      redirect("/sessions");
     } catch (error) {
       if (error instanceof Error) {
         setErrorMessage("Login failed.");

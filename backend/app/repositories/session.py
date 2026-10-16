@@ -102,11 +102,15 @@ def find_workouts(
         statement = statement.where(WorkoutSession.status == status)
 
     if activity_type_id is not None:
-        statement = statement.where(WorkoutSession.items.any(activity_type_id))
+        statement = statement.where(WorkoutSession.items.any(
+            WorkoutSessionItem.activity_type_id == activity_type_id
+        ))
 
-    if unscheduled is not None:
-        statement = statement.where(WorkoutSession.session_at is None)
-
+    if unscheduled is True:
+        statement = statement.where(WorkoutSession.session_at.is_(None))
+    elif unscheduled is False:
+        statement = statement.where(WorkoutSession.session_at.is_not(None))
+    
     if plan_id is not None:
         statement = statement.where(WorkoutSession.plan_id == plan_id)
 

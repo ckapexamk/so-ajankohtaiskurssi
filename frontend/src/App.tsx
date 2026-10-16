@@ -2,10 +2,11 @@ import React from 'react';
 import { Route, Routes } from 'react-router';
 import './App.css';
 
+import ProtectedRoute from './auth/ProtectedRoute';
 import HomePage from "./pages/HomePage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
-import ProtectedRoute from './auth/ProtectedRoute';
+import SessionsPage from "./pages/SessionsPage";
 
 const App : React.FC = () : React.ReactElement => {
   return (
@@ -16,6 +17,7 @@ const App : React.FC = () : React.ReactElement => {
 
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/sessions" element={<SessionsPage />} />
         </Route>
       </Routes>
     </>
