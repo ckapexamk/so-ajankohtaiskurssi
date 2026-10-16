@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import apiReq from "../api/client";
 import MeasurementEditor, {
   type ActivityType,
@@ -35,24 +35,51 @@ interface SessionCreatePayload {
   }>;
 }
 
+interface WorkoutSession {
+  id: string;
+  name: string;
+  session_at: string | null;
+  status: SessionStatus;
+  notes: string | null;
+  intensity: number | null;
+  plan_id: string | null;
+  items: Array<{
+    activity_type_id: string;
+    sort_order: number;
+    notes: string | null;
+    measurements: Array<{
+      unit_type_id: string;
+      planned_value: number | null;
+      actual_value: number | null;
+      set_index: number | null;
+    }>;
+  }>;
+}
+
 const emptyExercise = (): DraftExercise => ({
   activity_type_id: "",
   measurements: [],
 });
 
+const toDateTimeLocal = (value: string | null): string => {
+  if (!value) return "";
+
+  const date = new Date(value);
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+  return date.toISOString().slice(0, 16);
+};
+
 const SessionsFormPage: React.FC = (): React.ReactElement => {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const { sessionId } = useParams();
 
-  const [name, setName] = useState("");
-  const [sessionAt, setSessionAt] = useState("");
-  const [status, setStatus] = useState<SessionStatus>("planned");
-  const [notes, setNotes] = useState("");
-  const [intensity, setIntensity] = useState("");
-  const [planId, setPlanId] = useState("");
-  const [exercises, setExercises] = useState<DraftExercise[]>([emptyExercise(),]);
-
-  const [formError, setFormError] = useState<string | null>(null);
+  const session = useQuery({
+    queryKey: ["sessions", sessionId],
+    queryFn: () => {
+      if (!sessionId) throw new Error("A session ID is required.");
+      return apiReq<WorkoutSession>(`/sessions/${sessionId}`);
+    },
+    enabled: Boolean(sessionId),
+  });
 
   const activities = useQuery({
     queryKey: ["activity-types"],
@@ -64,10 +91,87 @@ const SessionsFormPage: React.FC = (): React.ReactElement => {
     queryFn: () => apiReq<Plan[]>("/plans"),
   });
 
-  const createSession = useMutation({
+  if (
+    activities.isPending ||
+    plans.isPending ||
+    (Boolean(sessionId) && session.isPending)
+  ) {
+    return <p>Loading form options…</p>;
+  }
+
+  if (sessionId && session.isError) {
+    return (
+      <p role="alert">
+        Could not load this session. It may not exist or you may not have access.
+      </p>
+    );
+  }
+
+  if (activities.isError || plans.isError) {
+    return <p>Could not load activities or plans.</p>;
+  }
+
+  return (
+    <SessionFormContent
+      key={sessionId ?? "new"}
+      sessionId={sessionId}
+      initialSession={session.data}
+      activities={activities.data}
+      plans={plans.data}
+    />
+  );
+};
+
+interface SessionFormContentProps {
+  sessionId: string | undefined;
+  initialSession: WorkoutSession | undefined;
+  activities: ActivityType[];
+  plans: Plan[];
+}
+
+const SessionFormContent: React.FC<SessionFormContentProps> = ({
+  sessionId,
+  initialSession,
+  activities,
+  plans,
+}): React.ReactElement => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const [name, setName] = useState(initialSession?.name ?? "");
+  const [sessionAt, setSessionAt] = useState(
+    toDateTimeLocal(initialSession?.session_at ?? null),
+  );
+  const [status, setStatus] = useState<SessionStatus>(
+    initialSession?.status ?? "planned",
+  );
+  const [notes, setNotes] = useState(initialSession?.notes ?? "");
+  const [intensity, setIntensity] = useState(
+    initialSession?.intensity?.toString() ?? "",
+  );
+  const [planId, setPlanId] = useState(initialSession?.plan_id ?? "");
+  const [exercises, setExercises] = useState<DraftExercise[]>(
+    initialSession
+      ? [...initialSession.items]
+          .sort((a, b) => a.sort_order - b.sort_order)
+          .map((item) => ({
+            activity_type_id: item.activity_type_id,
+            measurements: item.measurements.map((measurement) => ({
+              unit_type_id: measurement.unit_type_id,
+              planned_value: measurement.planned_value?.toString() ?? "",
+              actual_value: measurement.actual_value?.toString() ?? "",
+              set_index: measurement.set_index?.toString() ?? "",
+            })),
+          }))
+      : [emptyExercise()],
+  );
+
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const saveSession = useMutation({
     mutationFn: (payload: SessionCreatePayload) =>
-      apiReq("/sessions", {
-        method: "POST",
+      apiReq(sessionId ? `/sessions/${sessionId}` : "/sessions", {
+        method: sessionId ? "PATCH" : "POST",
         body: JSON.stringify(payload),
       }),
     onSuccess: async () => {
@@ -77,7 +181,7 @@ const SessionsFormPage: React.FC = (): React.ReactElement => {
   });
 
   const selectActivity = (exerciseIndex: number, activityTypeId: string) => {
-    const activity = activities.data?.find(
+    const activity = activities.find(
       (item) => item.id === activityTypeId,
     );
 
@@ -123,9 +227,7 @@ const SessionsFormPage: React.FC = (): React.ReactElement => {
 
   const addSet = (exerciseIndex: number) => {
     const exercise = exercises[exerciseIndex];
-    const activity = activities.data?.find(
-      (item) => item.id === exercise.activity_type_id,
-    );
+    const activity = activities.find((item) => item.id === exercise.activity_type_id);
     if (!activity) return;
 
     const perSetLinks = activity.unit_link.filter((link) => link.per_set);
@@ -234,7 +336,7 @@ const SessionsFormPage: React.FC = (): React.ReactElement => {
         return;
       }
 
-      const activity = activities.data?.find(
+      const activity = activities.find(
         (item) => item.id === exercise.activity_type_id,
       );
       if (!activity) continue;
@@ -291,20 +393,12 @@ const SessionsFormPage: React.FC = (): React.ReactElement => {
       })),
     };
 
-    createSession.mutate(payload);
+    saveSession.mutate(payload);
   };
-
-  if (activities.isPending || plans.isPending) {
-    return <p>Loading form options…</p>;
-  }
-
-  if (activities.isError || plans.isError) {
-    return <p>Could not load activities or plans.</p>;
-  }
 
   return (
     <section>
-      <h1>Add session</h1>
+      <h1>{sessionId ? "Edit session" : "Add session"}</h1>
       <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: "0.5em" }}>
         <label>
           Name<div>
@@ -365,7 +459,7 @@ const SessionsFormPage: React.FC = (): React.ReactElement => {
             onChange={(event) => setPlanId(event.target.value)}
           >
             <option value="">No plan</option>
-            {plans.data.map((plan) => (
+            {plans.map((plan) => (
               <option key={plan.id} value={plan.id}>
                 {plan.name}
               </option>
@@ -381,7 +475,7 @@ const SessionsFormPage: React.FC = (): React.ReactElement => {
           {exercises.map((exercise, exerciseIndex) => (
             <MeasurementEditor
               key={exerciseIndex}
-              activities={activities.data}
+              activities={activities}
               exercise={exercise}
               exerciseIndex={exerciseIndex}
               canRemoveExercise={exercises.length > 1}
@@ -407,14 +501,16 @@ const SessionsFormPage: React.FC = (): React.ReactElement => {
           Add exercise
         </button>
 
-        {createSession.isError && (
+        {saveSession.isError && (
           <p role="alert">
-            Could not save session. Check required values and try again.
+            {saveSession.error instanceof Error
+              ? saveSession.error.message
+              : "Could not save session. Please try again."}
           </p>
         )}
 
-        <button type="submit" disabled={createSession.isPending}>
-          {createSession.isPending ? "Saving…" : "Save session"}
+        <button type="submit" disabled={saveSession.isPending}>
+          {saveSession.isPending ? "Saving…" : "Save session"}
         </button>
       </form>
       <p>

@@ -20,6 +20,7 @@ const App : React.FC = () : React.ReactElement => {
           <Route path="/" element={<HomePage />} />
           <Route path="/sessions" element={<SessionsPage />} />
           <Route path="/sessions/new" element={<SessionsFormPage />} />
+          <Route path="/sessions/:sessionId/edit" element={<SessionsFormPage />} />
         </Route>
       </Routes>
     </>

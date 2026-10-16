@@ -172,7 +172,7 @@ def update_workout(
         setattr(workout, field, value)
 
     if items_data is not None:
-        workout.items = build_items(items_data)
+        workout.items = build_items(patch.items)
 
     db.flush()
     return workout

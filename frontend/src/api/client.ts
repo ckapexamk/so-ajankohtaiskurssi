@@ -19,7 +19,36 @@ const apiReq = async <T,>(path: string, req: RequestInit = {}) : Promise<T> => {
     });
 
     if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
+        const responseText = await response.text();
+        let message = `Request failed with status ${response.status}`;
+
+        if (responseText) {
+            try {
+                const responseData: unknown = JSON.parse(responseText);
+                if (
+                    typeof responseData === "object" &&
+                    responseData !== null &&
+                    "detail" in responseData
+                ) {
+                    const detail = responseData.detail;
+                    message += `: ${
+                        typeof detail === "string"
+                            ? detail
+                            : JSON.stringify(detail)
+                    }`;
+                } else {
+                    message += `: ${responseText}`;
+                }
+            } catch {
+                message += `: ${responseText}`;
+            }
+        }
+
+        throw new Error(message);
+    }
+
+    if (response.status === 204) {
+        return undefined as T;
     }
 
     return (await response.json()) as T;
