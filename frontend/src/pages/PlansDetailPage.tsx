@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router";
 import apiReq from "../api/client";
+import Alert from "../components/Alert";
+import EmptyState from "../components/EmptyState";
 
 interface SessionSummary {
   id: string;
@@ -89,9 +91,13 @@ const PlansDetailPage: React.FC = (): React.ReactElement => {
   if (plan.isError || sessions.isError) {
     return (
       <section>
-        <p role="alert">
-          Could not load this plan. It may not exist or you may not have access.
-        </p>
+        <Alert>
+          {plan.error instanceof Error
+            ? plan.error.message
+            : sessions.error instanceof Error
+              ? sessions.error.message
+              : "Could not load this plan. It may not exist or you may not have access."}
+        </Alert>
         <Link to="/plans">Back to plans</Link>
       </section>
     );
@@ -136,7 +142,7 @@ const PlansDetailPage: React.FC = (): React.ReactElement => {
         <p>Length: {plan.data.length_weeks} weeks</p>
       )}
 
-      {error && <p role="alert">{error}</p>}
+      {error && <Alert>{error}</Alert>}
 
       <form style={{ display: "flex", flexDirection: "column", gap: "0.5em" }}
         onSubmit={(event) => {
@@ -162,6 +168,9 @@ const PlansDetailPage: React.FC = (): React.ReactElement => {
             ))}
           </select></div>
         </label>
+        {availableSessions.length === 0 && (
+          <p>There are no unassigned sessions available to attach.</p>
+        )}
         <div>
         <button
           type="submit"
@@ -173,14 +182,16 @@ const PlansDetailPage: React.FC = (): React.ReactElement => {
 
       <h2>Scheduled sessions</h2>
       {scheduledSessions.length === 0 ? (
-        <ul>No sessions scheduled.</ul>
+        <EmptyState title="No scheduled sessions">
+          Attach a session above to add it to this plan.
+        </EmptyState>
       ) : (
         <ol>{scheduledSessions.map(renderSession)}</ol>
       )}
 
       <h2>Unscheduled sessions</h2>
       {unscheduledSessions.length === 0 ? (
-        <ul>Nothing here.</ul>
+        <EmptyState title="No unscheduled sessions" />
       ) : (
         <ol>{unscheduledSessions.map(renderSession)}</ol>
       )}

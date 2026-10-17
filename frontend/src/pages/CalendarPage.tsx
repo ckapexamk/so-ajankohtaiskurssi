@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
 import apiReq from "../api/client";
+import Alert from "../components/Alert";
+import EmptyState from "../components/EmptyState";
 
 type CalendarView = "month" | "week";
 type SessionStatus = "planned" | "in_progress" | "completed";
@@ -173,7 +175,15 @@ const CalendarPage: React.FC = (): React.ReactElement => {
           dateStyle: "medium",
         }).format(visibleDates[6])}`;
 
-  if (plans.isError) return <p role="alert">Could not load plans.</p>;
+  if (plans.isError) {
+    return (
+      <Alert>
+        {plans.error instanceof Error
+          ? plans.error.message
+          : "Could not load plans."}
+      </Alert>
+    );
+  }
 
   return (
     <section>
@@ -219,78 +229,91 @@ const CalendarPage: React.FC = (): React.ReactElement => {
         </label></div>
       </div>
 
-      {error && <p role="alert">{error}</p>}
+      {error && <Alert>{error}</Alert>}
       {calendar.isPending ? (
         <p>Loading calendar…</p>
       ) : calendar.isError ? (
-        <p role="alert">Could not load calendar sessions.</p>
+        <Alert>
+          {calendar.error instanceof Error
+            ? calendar.error.message
+            : "Could not load calendar sessions."}
+        </Alert>
       ) : (
-        <div
-          role="grid"
-          aria-label={view === "month" ? "Monthly calendar" : "Weekly calendar"}
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-            marginTop: "1em",
-          }}
-        >
-          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
-            (day) => (
-              <strong role="columnheader" key={day}>{day}</strong>
-            ),
+        <>
+          {calendar.data.length === 0 && (
+            <EmptyState
+              title="No sessions scheduled for this date range."
+              action={<Link to="/sessions/new">Create a session</Link>}
+            >
+            </EmptyState>
           )}
-          {visibleDates.map((date) => {
-            const key = dateKey(date);
-            const sessions = sessionsByDay.get(key) ?? [];
-            const outsideMonth =
-              view === "month" && date.getMonth() !== cursor.getMonth();
+          <div
+            role="grid"
+            aria-label={view === "month" ? "Monthly calendar" : "Weekly calendar"}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+              marginTop: "1em",
+            }}
+          >
+            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
+              (day) => (
+                <strong role="columnheader" key={day}>{day}</strong>
+              ),
+            )}
+            {visibleDates.map((date) => {
+              const key = dateKey(date);
+              const sessions = sessionsByDay.get(key) ?? [];
+              const outsideMonth =
+                view === "month" && date.getMonth() !== cursor.getMonth();
 
-            return (
-              <div
-                role="gridcell"
-                key={key}
-                style={{
-                  border: "1px solid #bbb",
-                  minHeight: view === "month" ? "2em" : "6em",
-                  padding: "0.2em",
-                  opacity: outsideMonth ? 0.25 : 1,
-                }}
-              >
-                <strong>{date.getDate()}</strong>
-                {sessions.map((session) => (
-                  <div
-                    key={session.id}
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      textAlign: "center",
-                      backgroundColor: statusColors[session.status],
-                      color: "white",
-                      borderRadius: "0.4em",
-                      padding: "0.2em",
-                      marginTop: "0.2em"
-                    }}
-                  >{formatTime(session.session_at)}
-                    <Link
-                      to={`/sessions/${session.id}/edit`}
-                      style={{ color: "inherit" }}
-                    >
-                    {session.name}
-                    </Link>
-                    <button
-                      style={{ marginTop: "0.5em" }}
-                      type="button"
-                      onClick={() => startClone(session)}
-                      aria-label={`Clone ${session.name} to another date`}
-                    >
-                      Clone
-                    </button>
-                  </div>
-                ))}
-              </div>
-            );
-          })}
-        </div>
+              return (
+                <div
+                  role="gridcell"
+                  key={key}
+                  style={{
+                    border: "1px solid #bbb",
+                    minHeight: view === "month" ? "2em" : "6em",
+                    padding: "0.2em",
+                    opacity: outsideMonth ? 0.25 : 1,
+                  }}
+                >
+                  <strong>{date.getDate()}</strong>
+                  {sessions.map((session) => (
+                    <div
+                      key={session.id}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        textAlign: "center",
+                        backgroundColor: statusColors[session.status],
+                        color: "white",
+                        borderRadius: "0.4em",
+                        padding: "0.2em",
+                        marginTop: "0.2em"
+                      }}
+                    >{formatTime(session.session_at)}
+                      <Link
+                        to={`/sessions/${session.id}/edit`}
+                        style={{ color: "inherit" }}
+                      >
+                      {session.name}
+                      </Link>
+                      <button
+                        style={{ marginTop: "0.5em" }}
+                        type="button"
+                        onClick={() => startClone(session)}
+                        aria-label={`Clone ${session.name} to another date`}
+                      >
+                        Clone
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {cloneSource && (

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router";
 import apiReq from "../api/client";
 import type { ActivityType } from "../components/ActivityTypeSelect";
+import Alert from "../components/Alert";
 import MeasurementEditor, {
   type DraftExercise,
   type DraftMeasurement,
@@ -101,14 +102,14 @@ const SessionsFormPage: React.FC = (): React.ReactElement => {
 
   if (sessionId && session.isError) {
     return (
-      <p role="alert">
+      <Alert>
         Could not load this session. It may not exist or you may not have access.
-      </p>
+      </Alert>
     );
   }
 
   if (activities.isError || plans.isError) {
-    return <p>Could not load activities or plans.</p>;
+    return <Alert>Could not load activities or plans.</Alert>;
   }
 
   return (
@@ -470,9 +471,7 @@ const SessionFormContent: React.FC<SessionFormContentProps> = ({
           </select></div>
         </label>
         {formError && (
-          <div style={{ backgroundColor: "red", color: "white", padding: "1em" }}>
-            <strong role="alert">{formError}</strong>
-          </div>
+          <Alert>{formError}</Alert>
         )}
         <section style={{  marginTop: "1em", marginBottom: "1em" }}>
           {exercises.map((exercise, exerciseIndex) => (
@@ -504,11 +503,11 @@ const SessionFormContent: React.FC<SessionFormContentProps> = ({
         </section>
         
         {saveSession.isError && (
-          <p role="alert">
+          <Alert>
             {saveSession.error instanceof Error
               ? saveSession.error.message
               : "Could not save session. Please try again."}
-          </p>
+          </Alert>
         )}
         <button type="submit" disabled={saveSession.isPending}>
           {saveSession.isPending ? "Saving…" : "Save session"}

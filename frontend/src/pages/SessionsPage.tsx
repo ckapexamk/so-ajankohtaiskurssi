@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router";
 import apiReq from "../api/client";
+import Alert from "../components/Alert";
+import EmptyState from "../components/EmptyState";
 
 interface WorkoutSession {
   id: string;
@@ -156,7 +158,12 @@ const SessionsPage: React.FC = (): React.ReactElement => {
   }
 
   if (sessions.isError || activities.isError) {
-    return <p role="alert">Could not load sessions.</p>;
+    const error = sessions.error ?? activities.error;
+    return (
+      <Alert>
+        {error instanceof Error ? error.message : "Could not load sessions."}
+      </Alert>
+    );
   }
 
   const activityNames = new Map(
@@ -176,14 +183,15 @@ const SessionsPage: React.FC = (): React.ReactElement => {
               Create a session
             </button>
           </Link>
-      {actionError && (
-        <div role="alert" style={{ backgroundColor: "red", color: "white", padding: "1em" }}>
-          {actionError}
-        </div>
-      )}
+      {actionError && <Alert>{actionError}</Alert>}
 
       {sessions.data.length === 0 ? (
-        <ul><h2>You are sessionless</h2></ul>
+        <EmptyState
+          title="No sessions yet"
+          action={<Link to="/sessions/new">Create your first session</Link>}
+        >
+          Create a session to start tracking your workouts.
+        </EmptyState>
       ) : (
 
         <div style={{ display: "flex" }}>

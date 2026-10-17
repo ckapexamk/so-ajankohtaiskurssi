@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
 import apiReq from "../api/client";
+import Alert from "../components/Alert";
+import EmptyState from "../components/EmptyState";
 
 interface Plan {
   id: string;
@@ -103,14 +105,22 @@ const PlansPage: React.FC = (): React.ReactElement => {
   };
 
   if (plans.isPending) return <p>Loading plans…</p>;
-  if (plans.isError) return <p role="alert">Could not load plans.</p>;
+  if (plans.isError) {
+    return (
+      <Alert>
+        {plans.error instanceof Error
+          ? plans.error.message
+          : "Could not load plans."}
+      </Alert>
+    );
+  }
 
   return (
     <section>
       <h1>Plans</h1>
       <p><Link to="/sessions">Back to sessions</Link></p>
 
-      {error && <p role="alert">{error}</p>}
+      {error && <Alert>{error}</Alert>}
 
       <form
         onSubmit={(event) => submit(event, editingPlan?.id ?? null)}
@@ -179,7 +189,9 @@ const PlansPage: React.FC = (): React.ReactElement => {
 
       <h2>Your plans</h2>
       {plans.data.length === 0 ? (
-        <ul>You are planless</ul>
+        <EmptyState title="No plans yet">
+          Create your first plan using the form above.
+        </EmptyState>
       ) : (
         <ul>
           {plans.data.map((plan) => (
