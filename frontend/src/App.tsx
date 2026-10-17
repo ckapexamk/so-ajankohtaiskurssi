@@ -3,7 +3,7 @@ import { Route, Routes } from 'react-router';
 import './App.css';
 
 import ProtectedRoute from './auth/ProtectedRoute';
-import HomePage from "./pages/HomePage";
+import DashboardPage from "./pages/DashboardPage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import SessionsPage from "./pages/SessionsPage";
@@ -20,7 +20,7 @@ const App : React.FC = () : React.ReactElement => {
         <Route path="/login" element={<LoginPage />} />
 
         <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<DashboardPage />} />
           <Route path="/sessions" element={<SessionsPage />} />
           <Route path="/sessions/new" element={<SessionsFormPage />} />
           <Route path="/sessions/:sessionId/edit" element={<SessionsFormPage />} />

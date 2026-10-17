@@ -166,16 +166,16 @@ const SessionsPage: React.FC = (): React.ReactElement => {
   return (
     <section>
       <h1>Sessions</h1>
-      <p>
-        <Link to="/sessions/new">Create session</Link>
-      </p>
-      <p>
-        <Link to="/plans">Plans</Link>
-      </p>
-      <p>
+      <nav aria-label="Main navigation">
+        <Link to="/">Dashboard</Link>{" / "}
+        <Link to="/plans">Plans</Link>{" / "}
         <Link to="/calendar">Calendar</Link>
-      </p>
-
+      </nav>
+          <Link to="/sessions/new">
+            <button style={{ marginTop: "2em" }}>
+              Create a session
+            </button>
+          </Link>
       {actionError && (
         <div role="alert" style={{ backgroundColor: "red", color: "white", padding: "1em" }}>
           {actionError}
@@ -185,8 +185,9 @@ const SessionsPage: React.FC = (): React.ReactElement => {
       {sessions.data.length === 0 ? (
         <ul><h2>You are sessionless</h2></ul>
       ) : (
+
         <div style={{ display: "flex" }}>
-        <ul>
+          <ul>
           {sessions.data.map((session) => {
             const summary = session.items
               .map(
@@ -198,7 +199,7 @@ const SessionsPage: React.FC = (): React.ReactElement => {
 
             return (
               <li key={session.id}>
-                <h2>{session.name}</h2>
+                <h3>{session.name}</h3>
                 <p>Session at: {formatDate(session.session_at)}</p>
                 <p>Status: {session.status}</p>
                 <p>Exercises: {summary || "None"}</p>
@@ -262,7 +263,8 @@ const SessionsPage: React.FC = (): React.ReactElement => {
               </li>
             );
           })}
-        </ul></div>
+          </ul>
+        </div>
       )}
     </section>
   );
