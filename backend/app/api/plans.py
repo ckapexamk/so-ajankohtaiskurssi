@@ -6,10 +6,11 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_current_user
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.session import PlanCreate, PlanRead, PlansRead
+from app.schemas.session import PlanCreate, PlanRead, PlanUpdate, PlansRead
 from app.services.ownership import PlanNotFoundError, SessionNotFoundError
 from app.services.plans import (
-    create_user_plan, get_user_plan, list_plans, delete_user_plan, attach_session, detach_session
+    create_user_plan, get_user_plan, list_plans, update_user_plan,
+    delete_user_plan, attach_session, detach_session,
 )
 
 router = APIRouter(
@@ -99,6 +100,29 @@ def get_plan(
             db=db,
             plan_id=plan_id,
             user_id=current_user.id,
+        )
+    except PlanNotFoundError:
+        raise HTTPException(status_code=404, detail="Not found")
+
+
+@router.patch("/{plan_id}", response_model=PlansRead)
+def patch_plan(
+    plan_id: UUID,
+    payload: PlanUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if "name" in payload.model_fields_set and (
+        payload.name is None or not payload.name.strip()
+    ):
+        raise HTTPException(status_code=422, detail="Plan name cannot be empty")
+
+    try:
+        return update_user_plan(
+            db=db,
+            plan_id=plan_id,
+            user_id=current_user.id,
+            patch=payload,
         )
     except PlanNotFoundError:
         raise HTTPException(status_code=404, detail="Not found")

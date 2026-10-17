@@ -398,6 +398,9 @@ const SessionFormContent: React.FC<SessionFormContentProps> = ({
 
   return (
     <section>
+      <p>
+        <Link to="/sessions">Back to sessions</Link>
+      </p>
       <h1>{sessionId ? "Edit session" : "Add session"}</h1>
       <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: "0.5em" }}>
         <label>
@@ -490,9 +493,7 @@ const SessionFormContent: React.FC<SessionFormContentProps> = ({
               }
             />
           ))}
-        </section>
-
-        <button
+        <button style={{ margin: "0.5em" }}
           type="button"
           onClick={() =>
             setExercises((current) => [...current, emptyExercise()])
@@ -500,7 +501,8 @@ const SessionFormContent: React.FC<SessionFormContentProps> = ({
         >
           Add exercise
         </button>
-
+        </section>
+        
         {saveSession.isError && (
           <p role="alert">
             {saveSession.error instanceof Error
@@ -508,14 +510,11 @@ const SessionFormContent: React.FC<SessionFormContentProps> = ({
               : "Could not save session. Please try again."}
           </p>
         )}
-
         <button type="submit" disabled={saveSession.isPending}>
           {saveSession.isPending ? "Saving…" : "Save session"}
         </button>
       </form>
-      <p>
-        <Link to="/sessions">Cancel</Link>
-      </p>
+      
     </section>
   );
 };

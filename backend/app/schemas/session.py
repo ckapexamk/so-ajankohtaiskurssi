@@ -44,10 +44,10 @@ class SessionCreate(BaseModel):
     items: list[ItemCreate] = Field(default_factory=list)
 
 class PlanCreate(BaseModel):
-    name: str
+    name: str = Field(min_length=1, max_length=100)
     notes: str | None = None
     start_date: date | None = None
-    length_weeks: int | None = None
+    length_weeks: int | None = Field(default=None, ge=1)
 
 # Read GET
 class MeasurementRead(BaseModel):
@@ -91,6 +91,13 @@ class PlansRead(BaseModel):
     notes: str | None = None
     start_date: date | None = None
     length_weeks: int | None = None
+
+
+class PlanUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    notes: str | None = None
+    start_date: date | None = None
+    length_weeks: int | None = Field(default=None, ge=1)
 
 
 class PlanRead(PlansRead):

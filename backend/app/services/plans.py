@@ -4,10 +4,11 @@ from sqlalchemy.orm import Session
 
 from app.models.workout_plan import WorkoutPlan
 from app.models.workout_sessions import WorkoutSession
-from app.schemas.session import PlanCreate
+from app.schemas.session import PlanCreate, PlanUpdate
 from app.repositories.session import (
     create_plan,
     find_user_plans,
+    update_plan,
 )
 from app.services.ownership import (
     SessionNotFoundError,
@@ -58,6 +59,18 @@ def create_user_plan(
 
 def list_plans(db: Session, user_id: UUID) -> list[WorkoutPlan]:
     return find_user_plans(db, user_id)
+
+
+def update_user_plan(
+    db: Session,
+    plan_id: UUID,
+    user_id: UUID,
+    patch: PlanUpdate,
+) -> WorkoutPlan:
+    plan = get_owned_plan(db, plan_id, user_id)
+    updated = update_plan(db=db, plan=plan, patch=patch)
+    db.commit()
+    return updated
 
 
 def get_user_plan(

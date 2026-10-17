@@ -8,7 +8,13 @@ from app.models.workout_sessions import WorkoutSession
 from app.models.workout_session_items import WorkoutSessionItem
 from app.models.workout_session_measurements import WorkoutSessionMeasurements
 from app.models.workout_plan import WorkoutPlan
-from app.schemas.session import PlanCreate, SessionCreate, SessionUpdate, ItemCreate
+from app.schemas.session import (
+    PlanCreate,
+    PlanUpdate,
+    SessionCreate,
+    SessionUpdate,
+    ItemCreate,
+)
 
 
 def build_items(items_data: list[ItemCreate]) -> list[WorkoutSessionItem]:
@@ -39,6 +45,18 @@ def create_plan(
         length_weeks=data.length_weeks,
     )
     db.add(plan)
+    db.flush()
+    return plan
+
+
+def update_plan(
+    db: Session,
+    plan: WorkoutPlan,
+    patch: PlanUpdate,
+) -> WorkoutPlan:
+    for field, value in patch.model_dump(exclude_unset=True).items():
+        setattr(plan, field, value)
+
     db.flush()
     return plan
 

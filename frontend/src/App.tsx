@@ -8,6 +8,8 @@ import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import SessionsPage from "./pages/SessionsPage";
 import SessionsFormPage from "./pages/SessionFormPage";
+import PlansPage from "./pages/PlansPage";
+import PlansDetailPage from "./pages/PlansDetailPage";
 
 const App : React.FC = () : React.ReactElement => {
   return (
@@ -21,6 +23,8 @@ const App : React.FC = () : React.ReactElement => {
           <Route path="/sessions" element={<SessionsPage />} />
           <Route path="/sessions/new" element={<SessionsFormPage />} />
           <Route path="/sessions/:sessionId/edit" element={<SessionsFormPage />} />
+          <Route path="/plans" element={<PlansPage />} />
+          <Route path="/plans/:planId" element={<PlansDetailPage />} />
         </Route>
       </Routes>
     </>

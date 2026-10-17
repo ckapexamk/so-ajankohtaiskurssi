@@ -169,6 +169,9 @@ const SessionsPage: React.FC = (): React.ReactElement => {
       <p>
         <Link to="/sessions/new">Create session</Link>
       </p>
+      <p>
+        <Link to="/plans">Plans</Link>
+      </p>
 
       {actionError && (
         <div role="alert" style={{ backgroundColor: "red", color: "white", padding: "1em" }}>
@@ -177,10 +180,10 @@ const SessionsPage: React.FC = (): React.ReactElement => {
       )}
 
       {sessions.data.length === 0 ? (
-        <p>No sessions.</p>
+        <ul><h2>You are sessionless</h2></ul>
       ) : (
         <div style={{ display: "flex" }}>
-        <ol>
+        <ul>
           {sessions.data.map((session) => {
             const summary = session.items
               .map(
@@ -255,7 +258,7 @@ const SessionsPage: React.FC = (): React.ReactElement => {
               </li>
             );
           })}
-        </ol></div>
+        </ul></div>
       )}
     </section>
   );

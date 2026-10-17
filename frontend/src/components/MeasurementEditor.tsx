@@ -138,7 +138,6 @@ const MeasurementEditor: React.FC<MeasurementEditorProps> = ({
           {setIndexes.map((setIndex) => (
             <fieldset key={setIndex}>
               <legend>Set {setIndex}</legend>
-              <div style={{ display: "grid", gap: "0.5em" }}>
                 {perSetLinks.map((link) => {
                   const measurementIndex = exercise.measurements.findIndex(
                     (measurement) =>
@@ -150,14 +149,13 @@ const MeasurementEditor: React.FC<MeasurementEditorProps> = ({
                   const measurement = exercise.measurements[measurementIndex];
 
                   return (
-                    <div key={link.unit_type_id}>
-                      <strong>
+                    <fieldset key={link.unit_type_id}>
+                        <legend>
                         {link.unit_type.name}
                         {link.unit_type.unit_label
                           ? ` (${link.unit_type.unit_label})`
                           : ""}
-                      </strong>
-                      <br />
+                        </legend>
                       <label>
                         Planned
                         <input
@@ -190,10 +188,9 @@ const MeasurementEditor: React.FC<MeasurementEditorProps> = ({
                           }
                         />
                       </label>
-                    </div>
+                    </fieldset>
                   );
                 })}
-              </div>
             </fieldset>
           ))}
         </section>
