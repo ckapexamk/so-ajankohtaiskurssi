@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router";
 import apiReq from "../api/client";
+import type { ActivityType } from "../components/ActivityTypeSelect";
 import MeasurementEditor, {
-  type ActivityType,
   type DraftExercise,
   type DraftMeasurement,
 } from "../components/MeasurementEditor";

@@ -1,16 +1,8 @@
-export interface ActivityType {
-  id: string;
-  name: string;
-  unit_link: Array<{
-    unit_type_id: string;
-    per_set: boolean;
-    is_required: boolean;
-    unit_type: {
-      name: string;
-      unit_label: string | null;
-    };
-  }>;
-}
+import ActivityTypeSelect, {
+  type ActivityType,
+} from "./ActivityTypeSelect";
+
+export type { ActivityType } from "./ActivityTypeSelect";
 
 export interface DraftMeasurement {
   unit_type_id: string;
@@ -72,21 +64,13 @@ const MeasurementEditor: React.FC<MeasurementEditorProps> = ({
       <legend>Exercise {exerciseIndex + 1}</legend>
       <label>
         Activity
-        <select
-          style={{ marginBottom: "1em" }}
-          required
+        <ActivityTypeSelect
+          activities={activities}
           value={exercise.activity_type_id}
-          onChange={(event) =>
-            onSelectActivity(exerciseIndex, event.target.value)
+          onChange={(activityTypeId) =>
+            onSelectActivity(exerciseIndex, activityTypeId)
           }
-        >
-          <option value="">Choose an activity</option>
-          {activities.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.name}
-            </option>
-          ))}
-        </select>
+        />
       </label>
 
       {singleLinks.map((link) => {
