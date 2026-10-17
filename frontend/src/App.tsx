@@ -10,6 +10,7 @@ import SessionsPage from "./pages/SessionsPage";
 import SessionsFormPage from "./pages/SessionFormPage";
 import PlansPage from "./pages/PlansPage";
 import PlansDetailPage from "./pages/PlansDetailPage";
+import CalendarPage from "./pages/CalendarPage";
 
 const App : React.FC = () : React.ReactElement => {
   return (
@@ -25,6 +26,7 @@ const App : React.FC = () : React.ReactElement => {
           <Route path="/sessions/:sessionId/edit" element={<SessionsFormPage />} />
           <Route path="/plans" element={<PlansPage />} />
           <Route path="/plans/:planId" element={<PlansDetailPage />} />
+          <Route path="/calendar" element={<CalendarPage />} />
         </Route>
       </Routes>
     </>

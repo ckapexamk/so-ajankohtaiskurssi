@@ -172,6 +172,9 @@ const SessionsPage: React.FC = (): React.ReactElement => {
       <p>
         <Link to="/plans">Plans</Link>
       </p>
+      <p>
+        <Link to="/calendar">Calendar</Link>
+      </p>
 
       {actionError && (
         <div role="alert" style={{ backgroundColor: "red", color: "white", padding: "1em" }}>
@@ -218,7 +221,8 @@ const SessionsPage: React.FC = (): React.ReactElement => {
                 </div>
                 
                 {cloneSessionId === session.id && (
-                  <dialog open>
+                  <dialog open aria-labelledby="clone-session-title">
+                    <h2 id="clone-session-title">Clone session</h2>
                   <form onSubmit={submitClone} style={{
                     display: "flex",
                     flexDirection: "column",
