@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import apiReq from "../api/client";
 
 interface HealthResponse {
@@ -6,24 +6,22 @@ interface HealthResponse {
 }
 
 const HomePage: React.FC = (): React.ReactElement => {
-  const [health, setHealth] = useState<string>("Tarkistetaan palvelinta...");
-
-  useEffect(() => {
-    apiReq<HealthResponse>("/health")
-      .then((response) => {
-        setHealth(response.status === "ok" ? "OK" : "failed");
-      })
-      .catch((error) => {
-        console.error(error);
-        setHealth("failed");
-      });
-  }, []);
+  
+  const healthQuery = useQuery({
+    queryKey: ["health"],
+    queryFn: () => apiReq<HealthResponse>("/health"),
+  });
 
   return (
     <>
       <h2>Sprint 1 placeholder</h2>
       <h4>API health:</h4>
-      <p>{health}</p>
+
+      {healthQuery.isPending && <p>Checking server...</p>}
+      {healthQuery.isError && <p>Server is not ok.</p>}
+      {healthQuery.isSuccess && (
+        <p>{healthQuery.data.status === "ok" ? "OK" : "failed"}</p>
+      )}
     </>
   );
 };
