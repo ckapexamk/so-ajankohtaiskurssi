@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
 import apiReq from "../api/client";
-import Alert from "../components/Alert";
+import { Alert, Anchor, Button, Container, DataList, Divider, Group, NumberInput, Paper, Textarea, TextInput, Title } from "@mantine/core";
+import { DateInput } from "@mantine/dates";
 import EmptyState from "../components/EmptyState";
 
 interface Plan {
@@ -25,7 +26,7 @@ const PlansPage: React.FC = (): React.ReactElement => {
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
-  const [startDate, setStartDate] = useState("");
+  const [startDate, setStartDate] = useState<string | null>(null);
   const [lengthWeeks, setLengthWeeks] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -107,7 +108,7 @@ const PlansPage: React.FC = (): React.ReactElement => {
   if (plans.isPending) return <p>Loading plans…</p>;
   if (plans.isError) {
     return (
-      <Alert>
+      <Alert color="red" variant="filled">
         {plans.error instanceof Error
           ? plans.error.message
           : "Could not load plans."}
@@ -116,106 +117,130 @@ const PlansPage: React.FC = (): React.ReactElement => {
   }
 
   return (
-    <section>
-      <h1>Plans</h1>
-      <p><Link to="/sessions">Back to sessions</Link></p>
+    <>
+      <Container fluid style={{ maxWidth: 800, margin: "0 auto" }}>
+      <Title>Plans</Title>
+      <Group>
+        <nav aria-label="Main navigation">
+          <Anchor component={Link} to="/">Dashboard</Anchor>
+          {` / `}
+          <Anchor component={Link} to="/sessions">Sessions</Anchor>
+          {` / `}
+          <Anchor component={Link} to="/calendar">Calendar</Anchor>
+        </nav>
+      </Group>
 
-      {error && <Alert>{error}</Alert>}
-
+      {error && <Alert color="red" variant="filled">{error}</Alert>}
+      <Paper withBorder shadow="sm" p="md" m="md">
       <form
         onSubmit={(event) => submit(event, editingPlan?.id ?? null)}
         style={{ display: "flex", flexDirection: "column", gap: "0.5em" }}
       >
-        <h2>{editingPlan ? "Edit plan" : "Create plan"}</h2>
-        <label>
-          Name
-          <div>
-            <input
+        <Title order={3}>{editingPlan ? `${name}` : "Create plan"}</Title>
+        
+            <TextInput
+              label="Name"
               required
               maxLength={100}
               value={name}
               onChange={(event) => setName(event.target.value)}
             />
-          </div>
-        </label>
-        <label>
-          Notes
-          <div>
-            <textarea
+
+            <Textarea
+              label="Notes (optional)"
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
             />
-          </div>
-        </label>
-        <label>
-          Start date (optional)
-          <div>
-            <input
-              type="date"
+            <Group mb={"0.5em"}>
+            <DateInput
+              label="Start date (optional)"
               value={startDate}
-              onChange={(event) => setStartDate(event.target.value)}
+              onChange={(event) => setStartDate(event || "")}
             />
-          </div>
-        </label>
-        <label>
-          Length in weeks (optional)
-          <div>
-            <input
-              type="number"
+
+            <NumberInput
+              label="Length in weeks (optional)"
               min={1}
               value={lengthWeeks}
-              onChange={(event) => setLengthWeeks(event.target.value)}
+              onChange={(event) => setLengthWeeks(String(event))}
             />
-          </div>
-        </label><div>
-        <button type="submit" disabled={savePlan.isPending}>
+
+            </Group><Divider mb="0.5em"></Divider>
+
+        <Button type="submit" disabled={savePlan.isPending}>
           {savePlan.isPending
             ? "Saving…"
             : editingPlan
               ? "Save changes"
               : "Create plan"}
-        </button></div>
+        </Button>
+            
         {editingPlan && (
-          <div>
-          <button
+          <Button variant="default"
             type="button"
             onClick={resetForm}
             disabled={savePlan.isPending}
           >
-            Cancel edit
-          </button></div>
+            Cancel
+          </Button>
         )}
       </form>
+      </Paper><Divider mt="2em" mb="2em"></Divider>
 
-      <h2>Your plans</h2>
+      
       {plans.data.length === 0 ? (
         <EmptyState title="No plans yet">
           Create your first plan using the form above.
         </EmptyState>
       ) : (
-        <ul>
+
+        <Paper style={{  maxWidth: "80%", margin: "0 auto" }}>
+        <Title order={3}>Your plans</Title>
           {plans.data.map((plan) => (
-            <li key={plan.id}>
-              <h3><Link to={`/plans/${plan.id}`}>{plan.name}</Link></h3>
-              {plan.start_date && <p>Starts: {plan.start_date}</p>}
+
+            <Paper shadow="sm" p="xs" m="xs">
+              <Title order={4} mb="0.5em">
+                <Anchor component={Link} to={`/plans/${plan.id}`}>{plan.name}</Anchor>
+              </Title>
+            <DataList withDivider key={plan.id} mb={"0.5em"}>
+              
+              {plan.start_date &&
+                <DataList.Item>
+                  <DataList.ItemLabel>Starts: </DataList.ItemLabel>
+                  <DataList.ItemValue>{plan.start_date}</DataList.ItemValue>
+                </DataList.Item>
+              }
               {plan.length_weeks !== null && (
-                <p>Length: {plan.length_weeks} weeks</p>
+                <DataList.Item>
+                  <DataList.ItemLabel>Length: </DataList.ItemLabel>
+                  <DataList.ItemValue>{plan.length_weeks} weeks</DataList.ItemValue>
+                </DataList.Item>
               )}
-              <button type="button" onClick={() => editPlan(plan)}>
-                Edit
-              </button>
-              <button
-                type="button"
-                onClick={() => confirmDelete(plan)}
-                disabled={deletePlan.isPending || savePlan.isPending}
-              >
-                Delete
-              </button>
-            </li>
+              <DataList.Item>
+              <Group>
+
+                <Button variant="default" size="compact-md"
+                  onClick={() => editPlan(plan)}
+                > Edit
+                </Button>
+
+                <Button variant="default" size="compact-md"
+                  onClick={() => confirmDelete(plan)}
+                  disabled={deletePlan.isPending || savePlan.isPending}
+                >Delete
+                </Button>
+
+              </Group>
+              </DataList.Item>
+              
+            </DataList>
+            </Paper>
           ))}
-        </ul>
+        
+        </Paper>
       )}
-    </section>
+      </Container>
+    </>
   );
 };
 

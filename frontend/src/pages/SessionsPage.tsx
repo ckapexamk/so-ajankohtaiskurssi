@@ -2,7 +2,19 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router";
 import apiReq from "../api/client";
-import Alert from "../components/Alert";
+import { cloneSessionRequest, type CloneSessionPayload } from "../api/sessions";
+import {
+  Alert,
+  Anchor,
+  Button,
+  Container,
+  Group,
+  DataList,
+  Modal,
+  Paper,
+  TextInput,
+  Title,
+} from "@mantine/core";
 import EmptyState from "../components/EmptyState";
 
 interface WorkoutSession {
@@ -19,11 +31,6 @@ interface WorkoutSession {
 interface ActivityType {
   id: string;
   name: string;
-}
-
-interface CloneSessionRequest {
-  name: string;
-  session_at: string;
 }
 
 const formatDate = (sessionAt: string | null): string => {
@@ -108,12 +115,8 @@ const SessionsPage: React.FC = (): React.ReactElement => {
       payload,
     }: {
       sessionId: string;
-      payload: CloneSessionRequest;
-    }) =>
-      apiReq<WorkoutSession>(`/sessions/${sessionId}/clone`, {
-        method: "POST",
-        body: JSON.stringify(payload),
-      }),
+      payload: CloneSessionPayload;
+    }) => cloneSessionRequest<WorkoutSession>(sessionId, payload),
     onSuccess: async () => {
       setActionError(null);
       setCloneSessionId(null);
@@ -160,7 +163,7 @@ const SessionsPage: React.FC = (): React.ReactElement => {
   if (sessions.isError || activities.isError) {
     const error = sessions.error ?? activities.error;
     return (
-      <Alert>
+      <Alert color="red" variant="filled">
         {error instanceof Error ? error.message : "Could not load sessions."}
       </Alert>
     );
@@ -171,31 +174,37 @@ const SessionsPage: React.FC = (): React.ReactElement => {
   );
 
   return (
-    <section>
-      <h1>Sessions</h1>
-      <nav aria-label="Main navigation">
-        <Link to="/">Dashboard</Link>{" / "}
-        <Link to="/plans">Plans</Link>{" / "}
-        <Link to="/calendar">Calendar</Link>
-      </nav>
+    <>
+    <Container fluid style={{ maxWidth: 800, margin: "0 auto" }}>
+      <Title>Sessions</Title>
+
+      <Group>
+        <nav aria-label="Main navigation">
+          <Anchor component={Link} to="/">Dashboard</Anchor>
+          {` / `}
+          <Anchor component={Link} to="/plans">Plans</Anchor>
+          {` / `}
+          <Anchor component={Link} to="/calendar">Calendar</Anchor>
+        </nav>
+      </Group>
+
           <Link to="/sessions/new">
-            <button style={{ marginTop: "2em" }}>
+            <Button mt="lg">
               Create a session
-            </button>
+            </Button>
           </Link>
-      {actionError && <Alert>{actionError}</Alert>}
+      {actionError && <Alert color="red" variant="filled">{actionError}</Alert>}
 
       {sessions.data.length === 0 ? (
         <EmptyState
           title="No sessions yet"
-          action={<Link to="/sessions/new">Create your first session</Link>}
+          action={<Anchor component={Link} to="/sessions/new">Create your first session</Anchor>}
         >
           Create a session to start tracking your workouts.
         </EmptyState>
       ) : (
 
-        <div style={{ display: "flex" }}>
-          <ul>
+        <Container fluid style={{ maxWidth: 800, margin: "0 auto" }}>
           {sessions.data.map((session) => {
             const summary = session.items
               .map(
@@ -206,75 +215,99 @@ const SessionsPage: React.FC = (): React.ReactElement => {
               .join(", ");
 
             return (
-              <li key={session.id}>
-                <h3>{session.name}</h3>
-                <p>Session at: {formatDate(session.session_at)}</p>
-                <p>Status: {session.status}</p>
-                <p>Exercises: {summary || "None"}</p>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <Link to={`/sessions/${session.id}/edit`}>Edit</Link>{" "}
-                <button
-                  type="button"
-                  onClick={() => confirmDelete(session)}
-                  disabled={deleteSession.isPending}
-                >
-                  Delete
-                </button>{" "}
-                <button
-                  type="button"
-                  onClick={() => startClone(session)}
-                  disabled={cloneSession.isPending}
-                >
-                  Clone
-                </button>
-                </div>
-                
-                {cloneSessionId === session.id && (
-                  <dialog open aria-labelledby="clone-session-title">
-                    <h2 id="clone-session-title">Clone session</h2>
-                  <form onSubmit={submitClone} style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "0.5em"
-                  }}>
-                    
-                    <label>
-                      <div>New name</div>
-                      <input
-                        required
-                        maxLength={100}
-                        value={cloneName}
-                        onChange={(event) => setCloneName(event.target.value)}
-                      />
-                    </label>
-                    <label>
-                      <div>New date and time</div>
-                      <input
-                        required
-                        type="datetime-local"
-                        value={cloneDate}
-                        onChange={(event) => setCloneDate(event.target.value)}
-                      />
-                    </label>
-                    <button type="submit" disabled={cloneSession.isPending}>
-                      {cloneSession.isPending ? "Cloning…" : "Create clone"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCloneSessionId(null)}
+              <Paper withBorder shadow="sm" p="md" m="md" key={session.id}
+              >
+                <DataList key={session.id} withDivider>
+                    <Title order={4} mb="sm">
+                    <Anchor fw={600} fz="lg"
+                      component={Link} to={`/sessions/${session.id}/edit`}>{session.name}
+                    </Anchor>
+                    </Title>
+
+                  <DataList.Item>
+                    <DataList.ItemLabel>Session at:</DataList.ItemLabel>
+                    <DataList.ItemValue>{formatDate(session.session_at)}</DataList.ItemValue>
+                  </DataList.Item>
+
+                  <DataList.Item>
+                    <DataList.ItemLabel>Status:</DataList.ItemLabel>
+                    <DataList.ItemValue>{session.status}</DataList.ItemValue>
+                  </DataList.Item>
+
+                  <DataList.Item>
+                    <DataList.ItemLabel>Exercises:</DataList.ItemLabel>
+                    <DataList.ItemValue>{summary || "None"}</DataList.ItemValue>
+                  </DataList.Item>
+
+                  <Group justify="flex-end">
+
+                    <Button variant="default" size="compact-md"
+                      onClick={() => confirmDelete(session)}
+                      disabled={deleteSession.isPending}
+                    >Delete
+                    </Button>
+                    {" "}
+                    <Button variant="default" size="compact-md"
+                      onClick={() => startClone(session)}
                       disabled={cloneSession.isPending}
-                    >
-                      Cancel
-                    </button>
-                  </form></dialog>
-                )}
-              </li>
+                    >Clone
+                    </Button>
+
+                  </Group>
+
+              </DataList>
+              </Paper>
             );
           })}
-          </ul>
-        </div>
+         </Container>
       )}
-    </section>
+      <Modal
+        opened={cloneSessionId !== null}
+        onClose={() => {
+          if (!cloneSession.isPending) setCloneSessionId(null);
+        }}
+        title="Clone session"
+        centered
+      >
+        <form
+          onSubmit={submitClone}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5em",
+          }}
+        >
+          <TextInput
+            label="New name"
+            required
+            maxLength={100}
+            value={cloneName}
+            onChange={(event) => setCloneName(event.target.value)}
+          />
+          <TextInput
+            label="New date and time"
+            required
+            type="datetime-local"
+            value={cloneDate}
+            onChange={(event) => setCloneDate(event.target.value)}
+          />
+          <Group mt="md" justify="space-between">
+            <Button type="submit" disabled={cloneSession.isPending}>
+              {cloneSession.isPending ? "Cloning…" : "Create clone"}
+            </Button>
+            <Button
+              type="button"
+              variant="default"
+              onClick={() => setCloneSessionId(null)}
+              disabled={cloneSession.isPending}
+            >
+              Cancel
+            </Button>
+          </Group>
+        </form>
+      </Modal>
+    </Container>
+    </>
   );
 };
 

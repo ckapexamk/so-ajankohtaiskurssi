@@ -2,6 +2,9 @@ import ActivityTypeSelect, {
   type ActivityType,
 } from "./ActivityTypeSelect";
 
+import { Button, Container, Fieldset, Group, NumberInput, Stack } from "@mantine/core";
+
+
 export type { ActivityType } from "./ActivityTypeSelect";
 
 export interface DraftMeasurement {
@@ -59,20 +62,20 @@ const MeasurementEditor: React.FC<MeasurementEditorProps> = ({
     ),
   ].sort((a, b) => a - b);
 
+  
   return (
-    <fieldset>
-      <legend>Exercise {exerciseIndex + 1}</legend>
-      <label>
-        Activity
+    <Container fluid style={{ maxWidth: 600, margin: "0 auto" }}>
+    <Fieldset legend={`Exercise ${exerciseIndex + 1}`}>
         <ActivityTypeSelect
+          label="Activity"
           activities={activities}
           value={exercise.activity_type_id}
           onChange={(activityTypeId) =>
             onSelectActivity(exerciseIndex, activityTypeId)
           }
         />
-      </label>
 
+      <Group mt="md">
       {singleLinks.map((link) => {
         const measurementIndexes = exercise.measurements
           .map((measurement, index) =>
@@ -81,147 +84,152 @@ const MeasurementEditor: React.FC<MeasurementEditorProps> = ({
           .filter((index) => index >= 0);
 
         return (
-          <fieldset key={link.unit_type_id}>
-            <legend>
-              {link.unit_type.name}
-              {link.unit_type.unit_label
+          
+          <Fieldset key={link.unit_type_id}
+            legend={` 
+              ${link.unit_type.name}
+              ${link.unit_type.unit_label
                 ? ` (${link.unit_type.unit_label})`
                 : ""}
-              {link.is_required ? " — required" : ""}
-            </legend>
-
+              ${link.is_required ? " — required" : ""}`
+            }>
+          
             {measurementIndexes.map((measurementIndex) => {
               const measurement = exercise.measurements[measurementIndex];
               return (
                 <div key={`${link.unit_type_id}-${measurementIndex}`}>
-                  <label>
-                    Planned
-                    <input
-                      type="number"
-                      step="any"
+                  <Stack>
+                    <NumberInput
+                      label="Planned"
+                      allowNegative={false}
                       value={measurement.planned_value}
                       onChange={(event) =>
                         onUpdateMeasurement(
                           exerciseIndex,
                           measurementIndex,
                           "planned_value",
-                          event.target.value,
+                          String(event),
                         )
                       }
                     />
-                  </label>
-                  <label>
-                    Actual
-                    <input
-                      type="number"
-                      step="any"
+   
+                    <NumberInput
+                      label="Actual"
+                      allowNegative={false}
                       value={measurement.actual_value}
                       onChange={(event) =>
                         onUpdateMeasurement(
                           exerciseIndex,
                           measurementIndex,
                           "actual_value",
-                          event.target.value,
+                          String(event),
                         )
                       }
                     />
-                  </label>
+                  </Stack >
                 </div>
               );
             })}
-          </fieldset>
+          </Fieldset>
         );
       })}
-
+      
       {perSetLinks.length > 0 && (
         <section aria-label="Sets">
           {setIndexes.map((setIndex) => (
-            <fieldset key={setIndex}>
-              <legend>Set {setIndex}</legend>
-                {perSetLinks.map((link) => {
-                  const measurementIndex = exercise.measurements.findIndex(
-                    (measurement) =>
-                      measurement.unit_type_id === link.unit_type_id &&
-                      Number(measurement.set_index) === setIndex,
-                  );
+            <Fieldset key={setIndex}
+              legend={`Set ${setIndex}`}
+            >
+              {perSetLinks.map((link) => {
+                const measurementIndex = exercise.measurements.findIndex(
+                  (measurement) =>
+                    measurement.unit_type_id === link.unit_type_id &&
+                    Number(measurement.set_index) === setIndex,
+                );
 
-                  if (measurementIndex < 0) return null;
-                  const measurement = exercise.measurements[measurementIndex];
+                if (measurementIndex < 0) return null;
+                const measurement = exercise.measurements[measurementIndex];
 
                   return (
-                    <fieldset key={link.unit_type_id}>
-                        <legend>
-                        {link.unit_type.name}
-                        {link.unit_type.unit_label
+                    <Fieldset key={link.unit_type_id}
+                      legend={`
+                        ${link.unit_type.name}
+                        ${link.unit_type.unit_label
                           ? ` (${link.unit_type.unit_label})`
                           : ""}
-                        </legend>
-                      <label>
-                        Planned
-                        <input
-                          type="number"
-                          step="any"
-                          value={measurement.planned_value}
-                          onChange={(event) =>
-                            onUpdateMeasurement(
-                              exerciseIndex,
-                              measurementIndex,
-                              "planned_value",
-                              event.target.value,
-                            )
-                          }
-                        />
-                      </label>
-                      <label>
-                        Actual
-                        <input
-                          type="number"
-                          step="any"
-                          value={measurement.actual_value}
-                          onChange={(event) =>
-                            onUpdateMeasurement(
-                              exerciseIndex,
-                              measurementIndex,
-                              "actual_value",
-                              event.target.value,
-                            )
-                          }
-                        />
-                      </label>
-                    </fieldset>
+                      `}
+                    >
+                    <Stack>
+                    <Group justify="space-between">
+                      <NumberInput
+                        label="Planned"
+                        allowNegative={false}
+                        value={measurement.planned_value}
+                        onChange={(event) =>
+                          onUpdateMeasurement(
+                            exerciseIndex,
+                            measurementIndex,
+                            "planned_value",
+                            String(event),
+                          )
+                        }
+                      />
+
+                      <NumberInput
+                        label="Actual"
+                        value={measurement.actual_value}
+                        onChange={(event) =>
+                          onUpdateMeasurement(
+                            exerciseIndex,
+                            measurementIndex,
+                            "actual_value",
+                            String(event),
+                          )
+                        }
+                      />
+                      </Group>
+                      </Stack>
+
+                    </Fieldset>
+                    
                   );
                 })}
-            </fieldset>
+            </Fieldset>
           ))}
         </section>
       )}
-
-      <div style={{ display: "flex", gap: "1em", marginTop: "0.5em" }}>
+      </Group>
+        <Stack mt="1em">
         {perSetLinks.length > 0 && (
-          <div>
+          <Group justify="space-between">
             <button type="button" onClick={() => onAddSet(exerciseIndex)}>
               Add set
             </button>
-            <button
+
+            <Group>
+              <button
+                type="button"
+                onClick={() => onRemoveLastSet(exerciseIndex)}
+                disabled={setIndexes.length <= 1}
+              >
+                Remove set
+              </button>
+
+              <button
               type="button"
-              onClick={() => onRemoveLastSet(exerciseIndex)}
-              disabled={setIndexes.length <= 1}
-            >
-              Remove set
-            </button>
-          </div>
+              onClick={() => onRemoveExercise(exerciseIndex)}
+              disabled={!canRemoveExercise}
+              >Remove exercise
+              </button>
+            </Group>
+
+          </Group>
+
         )}
-        <div>
-          <button
-            type="button"
-            onClick={() => onRemoveExercise(exerciseIndex)}
-            disabled={!canRemoveExercise}
-          >
-            Remove exercise
-          </button>
-        </div>
-      </div>
-    </fieldset>
+      </Stack>
+      
+    </Fieldset>
+    </Container>
   );
 };
 

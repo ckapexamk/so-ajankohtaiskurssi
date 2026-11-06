@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router";
 import apiReq from "../api/client";
-import Alert from "../components/Alert";
+import { Anchor, Alert, Badge, Button, Container, DataList, Divider, NativeSelect, Paper, Text, Title } from "@mantine/core";
 import EmptyState from "../components/EmptyState";
 
 interface SessionSummary {
@@ -90,16 +90,16 @@ const PlansDetailPage: React.FC = (): React.ReactElement => {
   if (plan.isPending || sessions.isPending) return <p>Loading plan…</p>;
   if (plan.isError || sessions.isError) {
     return (
-      <section>
-        <Alert>
+      <>
+        <Alert color="red" variant="filled">
           {plan.error instanceof Error
             ? plan.error.message
             : sessions.error instanceof Error
               ? sessions.error.message
               : "Could not load this plan. It may not exist or you may not have access."}
         </Alert>
-        <Link to="/plans">Back to plans</Link>
-      </section>
+        <Anchor component={Link} to="/plans">Back to plans</Anchor>
+      </>
     );
   }
 
@@ -117,43 +117,70 @@ const PlansDetailPage: React.FC = (): React.ReactElement => {
   );
 
   const renderSession = (session: SessionSummary) => (
-    <li key={session.id} style={{ padding: "0.1em" }}>
+    <Container key={session.id} style={{ padding: "0.5em", mb: "2em" }}>
+      <Anchor component={Link} to={`/sessions/${session.id}/edit`}>
+        {session.name}
+      </Anchor>
       {session.session_at
-        ? `${formatSessionDate(session.session_at)} — `
+        ? ` — ${formatSessionDate(session.session_at)}`
         : ""}
-      <Link to={`/sessions/${session.id}/edit`}>{session.name}</Link>{" "}({session.status}){" "}
-      <button
-        type="button"
+      {" — "}
+      <Badge
+        color={
+          session.status === "planned"
+            ? "blue"
+            : session.status === "in_progress"
+              ? "cyan" : "green"
+        }
+      >{session.status}
+      </Badge>
+      {" "}
+      <Button variant="default" size="compact-md"
         onClick={() => detachSession.mutate(session.id)}
         disabled={detachSession.isPending}
-      >
-        Detach
-      </button>
-    </li>
+      >Detach
+      </Button>
+    </Container>
   );
 
   return (
-    <section>
-      <p><Link to="/plans">Back to plans</Link></p>
-      <h1>{plan.data.name}</h1>
-      {plan.data.notes && <p>{plan.data.notes}</p>}
-      {plan.data.start_date && <p>Starts: {plan.data.start_date}</p>}
-      {plan.data.length_weeks !== null && (
-        <p>Length: {plan.data.length_weeks} weeks</p>
-      )}
+    <Container fluid style={{ maxWidth: 800, margin: "0 auto" }}>
+      <Anchor component={Link} to="/plans">Back to plans</Anchor>
+      
+      <Title>{plan.data.name} — plan details</Title>
 
-      {error && <Alert>{error}</Alert>}
+      <Paper withBorder shadow="sm" p="md" m="md">
+        <DataList withDivider style={{ marginBottom: "1em" }}>
+          {plan.data.notes &&
+          <DataList.Item>
+            <DataList.ItemLabel>Notes: </DataList.ItemLabel>
+            <DataList.ItemValue>{plan.data.notes}</DataList.ItemValue>
+          </DataList.Item>}
 
-      <form style={{ display: "flex", flexDirection: "column", gap: "0.5em" }}
-        onSubmit={(event) => {
-          event.preventDefault();
+        {plan.data.start_date &&
+        <DataList.Item>
+          <DataList.ItemLabel>Starts: </DataList.ItemLabel>
+          <DataList.ItemValue>{plan.data.start_date}</DataList.ItemValue>
+        </DataList.Item>}
+
+        {plan.data.length_weeks !== null && (
+          <DataList.Item>
+          <DataList.ItemLabel>Length: </DataList.ItemLabel>
+          <DataList.ItemValue>{plan.data.length_weeks} weeks</DataList.ItemValue>
+        </DataList.Item>)}
+        
+        </DataList>
+      
+      {error && <Alert color="red" variant="filled">{error}</Alert>}
+        
+      <form
+        onSubmit={(event) => {event.preventDefault();
           if (selectedSessionId) attachSession.mutate(selectedSessionId);
         }}
       >
-        <label>
-          Attach an unassigned session
-          <div>
-          <select
+        <Container p="md" style={{ display: "grid", gap: "0.5em" }}>
+          <NativeSelect
+            label="Attach an unassigned session to this plan"
             value={selectedSessionId}
             onChange={(event) => setSelectedSessionId(event.target.value)}
           >
@@ -166,36 +193,45 @@ const PlansDetailPage: React.FC = (): React.ReactElement => {
                   : " — unscheduled"}
               </option>
             ))}
-          </select></div>
-        </label>
-        {availableSessions.length === 0 && (
-          <p>There are no unassigned sessions available to attach.</p>
-        )}
-        <div>
-        <button
-          type="submit"
-          disabled={!selectedSessionId || attachSession.isPending}
-        >
-          {attachSession.isPending ? "Attaching…" : "Attach session"}
-        </button></div>
-      </form>
+          </NativeSelect>
+          <Button
+            type="submit"
+            disabled={!selectedSessionId || attachSession.isPending}
+          >{attachSession.isPending ? "Attaching…" : "Attach session"}
+          </Button>
 
-      <h2>Scheduled sessions</h2>
+  
+        {availableSessions.length === 0 && (
+          <EmptyState
+            title="There are no unassigned sessions available to attach."
+            action={<Anchor component={Link} to="/sessions/new" >Create a new session</Anchor>}
+          ></EmptyState>
+        )}
+      </Container>
+
+      </form>
+      </Paper>
+
+      <Divider mt="2em"></Divider>
+      <Container>
+      <Title order={4} mt="1em">Scheduled sessions</Title>
       {scheduledSessions.length === 0 ? (
         <EmptyState title="No scheduled sessions">
           Attach a session above to add it to this plan.
         </EmptyState>
       ) : (
-        <ol>{scheduledSessions.map(renderSession)}</ol>
+        <Text>{scheduledSessions.map(renderSession)}</Text>
       )}
 
-      <h2>Unscheduled sessions</h2>
+      <Divider mt="2em"></Divider>
+      <Title order={4} mt="1em">Unscheduled sessions</Title>
       {unscheduledSessions.length === 0 ? (
         <EmptyState title="No unscheduled sessions" />
       ) : (
-        <ol>{unscheduledSessions.map(renderSession)}</ol>
+        <Text>{unscheduledSessions.map(renderSession)}</Text>
       )}
-    </section>
+      </Container>
+    </Container>
   );
 };
 

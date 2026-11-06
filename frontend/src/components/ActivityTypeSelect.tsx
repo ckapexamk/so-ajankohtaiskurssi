@@ -1,3 +1,5 @@
+import { NativeSelect } from "@mantine/core";
+
 export interface ActivityType {
   id: string;
   name: string;
@@ -14,6 +16,7 @@ export interface ActivityType {
 
 interface ActivityTypeSelectProps {
   activities: ActivityType[];
+  label: string;
   value: string;
   onChange: (activityTypeId: string) => void;
 }
@@ -40,11 +43,12 @@ const getUnitSummary = (activity: ActivityType): string => {
 
 const ActivityTypeSelect: React.FC<ActivityTypeSelectProps> = ({
   activities,
+  label,
   value,
   onChange,
 }): React.ReactElement => (
-  <select
-    style={{ marginBottom: "1em" }}
+  <NativeSelect
+    label={label}
     required
     value={value}
     onChange={(event) => onChange(event.target.value)}
@@ -55,7 +59,7 @@ const ActivityTypeSelect: React.FC<ActivityTypeSelectProps> = ({
         {activity.name} — {getUnitSummary(activity)}
       </option>
     ))}
-  </select>
+  </NativeSelect>
 );
 
 export default ActivityTypeSelect;
