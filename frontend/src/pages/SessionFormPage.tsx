@@ -3,11 +3,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router";
 import apiReq from "../api/client";
 import type { ActivityType } from "../components/ActivityTypeSelect";
-import Alert from "../components/Alert";
 import MeasurementEditor, {
   type DraftExercise,
   type DraftMeasurement,
 } from "../components/MeasurementEditor";
+
+import { Anchor, Alert, Button, Container, Divider, Group, NativeSelect, Stack, Text, Textarea, TextInput, Paper, Slider, Title } from "@mantine/core";
+import { DateTimePicker } from "@mantine/dates"
 
 interface Plan {
   id: string;
@@ -398,34 +400,35 @@ const SessionFormContent: React.FC<SessionFormContentProps> = ({
   };
 
   return (
-    <section>
-      <p>
-        <Link to="/sessions">Back to sessions</Link>
-      </p>
-      <h1>{sessionId ? "Edit session" : "Add session"}</h1>
+    <Container fluid style={{ maxWidth: 800, margin: "0 auto" }}>
+
+        <Anchor component={Link} to="/sessions">Back to sessions</Anchor>
+
+      <Title>{sessionId ? "Edit session" : "Add session"}</Title>
+      
       <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: "0.5em" }}>
-        <label>
-          Name<div>
-          <input
+        <Paper withBorder shadow="sm" p="md">
+          <Stack>
+          <Group>
+          <TextInput
+            label="Name"
             required
             maxLength={100}
             value={name}
             onChange={(event) => setName(event.target.value)}
-          /></div>
-        </label>
+          />
 
-        <label>
-          Session at (optional)<div>
-          <input
-            type="datetime-local"
+          <DateTimePicker
+            label="Session at (optional)"
+            placeholder="Pick date and time"
+            withNativeLevelSelect
+            clearable
             value={sessionAt}
-            onChange={(event) => setSessionAt(event.target.value)}
-          /></div>
-        </label>
-
-        <label>
-          Status<div>
-          <select
+            onChange={(event) => setSessionAt(event || "")}
+          />
+        
+          <NativeSelect
+            label="Status"
             value={status}
             onChange={(event) =>
               setStatus(event.target.value as SessionStatus)
@@ -434,31 +437,24 @@ const SessionFormContent: React.FC<SessionFormContentProps> = ({
             <option value="planned">Planned</option>
             <option value="in_progress">In progress</option>
             <option value="completed">Completed</option>
-          </select></div>
-        </label>
-
-        <label>
-          Notes<div>
-          <textarea
+          </NativeSelect>
+          </Group>
+          <Textarea
+            label="Notes (optional)"
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
-          /></div>
-        </label>
+          />
 
-        <label>
-          Intensity (1-10, optional)<div>
-          <input
-            type="number"
-            min={1}
+          <Text fw={600} size="sm">Intensity 1-10 (optional)</Text>
+          <Slider
+            min={0}
             max={10}
-            value={intensity}
-            onChange={(event) => setIntensity(event.target.value)}
-          /></div>
-        </label>
+            value={Number(intensity)}
+            onChange={(event) => setIntensity(String(event))}
+          />
 
-        <label>
-          Plan (optional)<div>
-          <select
+          <NativeSelect
+            label="Plan (optional)"
             value={planId}
             onChange={(event) => setPlanId(event.target.value)}
           >
@@ -468,12 +464,16 @@ const SessionFormContent: React.FC<SessionFormContentProps> = ({
                 {plan.name}
               </option>
             ))}
-          </select></div>
-        </label>
+          </NativeSelect>
+
+        </Stack>
+        </Paper>
+        
         {formError && (
           <Alert>{formError}</Alert>
         )}
-        <section style={{  marginTop: "1em", marginBottom: "1em" }}>
+        <Title order={4} mt="xs">Workout</Title>
+        <Paper withBorder shadow="sm" p="md"> 
           {exercises.map((exercise, exerciseIndex) => (
             <MeasurementEditor
               key={exerciseIndex}
@@ -492,16 +492,16 @@ const SessionFormContent: React.FC<SessionFormContentProps> = ({
               }
             />
           ))}
-        <button style={{ margin: "0.5em" }}
-          type="button"
+        
+
+        <Button mt="md"
           onClick={() =>
             setExercises((current) => [...current, emptyExercise()])
           }
         >
           Add exercise
-        </button>
-        </section>
-        
+        </Button>
+        </Paper>
         {saveSession.isError && (
           <Alert>
             {saveSession.error instanceof Error
@@ -509,12 +509,17 @@ const SessionFormContent: React.FC<SessionFormContentProps> = ({
               : "Could not save session. Please try again."}
           </Alert>
         )}
-        <button type="submit" disabled={saveSession.isPending}>
+
+        <Divider mb="0.5em" mt="1em"></Divider>
+        <Button style={{ minWidth: 200, margin: "0 auto" }}
+          type="submit"
+          disabled={saveSession.isPending}>
           {saveSession.isPending ? "Saving…" : "Save session"}
-        </button>
+        </Button>
+
       </form>
       
-    </section>
+    </Container>
   );
 };
 

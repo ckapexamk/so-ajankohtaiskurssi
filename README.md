@@ -2,8 +2,8 @@
 - [About](#-about)
 - [Prerequisites](#prerequisites)
 - [How to Install](#how-to-install)
-- [How to Test](#how-to-test)
 - [Create First User](#create-first-user)
+- [Testing](#testing)
 - [Sqladmin](#sqladmin)
 - [Troubleshooting](#troubleshooting)
 
@@ -18,81 +18,78 @@ Sprint index: [docs/sprints/README.md](./docs/sprints/README.md)
 - [Git](https://git-scm.com/install/windows) (For cloning the repository)
 
 ## How to Install
-1. Clone the repository
+### Initial Setup
+Run the following commands from the repository root. ( ***Windows PowerShell*** )
 ```powershell
-git clone https://github.com/ckapexamk/so-ajankohtaiskurssi.git
-cd so-ajankohtaiskurssi
-
-cp .env.example .env
+Copy-Item .env.example .env
 docker compose up --build
 ```
-
-2. Copy the environment template, and create ``.env`` (replace the values in the .env file with your own values)
-```powershell
-cp .env.example .env
-```
-
-3. Build and start the project
-```powershell
-docker compose up --build  
-```
   
-## Database setup
-
-### 1. Alembic migration
+### Database Setup
+#### 1. Alembic migration
 ```powershell
-cd backend
-python -m alembic upgrade head
+docker compose exec api alembic upgrade head
 ```
 
 ---
-### 2. Seed
-**app/services/seed.py**
+#### 2. Seed demo data
 
 To initialize the seed, run:
 ```powershell
-cd backend
-python -m app.db.init_db
+docker compose exec api python -m app.db.init_db
 ```
 
-
----
-### Environmental Variables
-These are located in the  root ``app/.env`` file.
-
-CORS_ORIGINS=http://localhost:5173, http://localhost:8000  
-
-> Separate additional cors-urls by comma ","  
-
-SQLADMIN_USERNAME  
-SQLADMIN_PASSWORD  
-SQLADMIN_SECRET_KEY  
-
-JWT_SECRET  
-ACCESS_TOKEN_EXPIRE_MINUTES
-
-> jwt_secret is not the same as sqladmin_secret_key.  
-
-## How to Test
-
-Currently testable URLs:
-
-**Frontend**
-- http://localhost:5173 — Takes you to login or home depending on login status
-- http://localhost:5173/register — create a new user
-- http://localhost:5173/login — login user
-
-**Backend**
-- http://localhost:8000/docs — OpenAPI
-- http://localhost:8000/admin — sqladmin
-- http://localhost:8000/health — Quick healthcheck for backend
-
+### Generating JWT secret for Login
+#### JWT_SECRET
+Run the following command in **PowerShell** and copy the result as your JWT_SECRET in your `.env` file.
+```powershell
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+Afterwards run the following command to recreate the `api` to use the secret.
+```powershell
+docker compose up -d --force-recreate api
+```
 
 ### Create First User
 1. Navigate to: http://localhost:5173/register
 2. Fill in your user info and press 'Submit'. You are redirected to the login page.
 3. Log in with the user you just created.  
 4. Logout
+
+---
+### Environmental Variables
+These are located in the  root ``app/.env`` file.
+
+| Variable                                                        | Used for                                                       |
+| --------------------------------------------------------------- | -------------------------------------------------------------- |
+| `API_HOST`, `API_PORT`                                          | Docker compose `api`                                           |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`             | Docker compose `db`                                            |
+| `DATABASE_URL`                                                  | Docker compose `db`                                            |
+| `CORS_ORIGINS`                                                  | Allows cross origin for `web`                                  |
+| `SQLADMIN_USERNAME`, `SQLADMIN_PASSWORD`, `SQLADMIN_SECRET_KEY` | Credentials for SQLAdmin<br>**Change these on shared devices** |
+| `JWT_SECRET`, `ACCESS_TOKEN_EXPIRE_MINUTES`                     | Credentials for app-user login<br>**Not for SQLAdmin**         |
+
+> **Use different secrets for JWT_SECRET and SQLADMIN_SECRET_KEY.**
+
+## Testing
+
+Currently testable URLs:
+
+**Frontend (No authorization)**
+- http://localhost:5173 — Login
+- http://localhost:5173/register — create a new user
+- http://localhost:5173/login — login user
+
+**Frontend (Authorized login)**
+- http://localhost:5173/ — User Dashboard
+- http://localhost:5173/sessions — `GET /sessions`
+- http://localhost:5173/plans — `GET /plans`
+- http://localhost:5173/calendar — `GET /calendar`
+
+**Backend**
+- http://localhost:8000/docs — OpenAPI
+- http://localhost:8000/admin — sqladmin
+- http://localhost:8000/health — Quick healthcheck for backend
 
 ## Sqladmin
 Access from: http://localhost:8000/admin
@@ -109,7 +106,7 @@ If you are using the app on a shared device change these to something more secur
 
 ## Troubleshooting
 
-### User creation
+### Registering a new user
 > "I can't see the registration page."
 - Make sure you are using the frontend port, which is 5173 by default.
 - The default path is: http://localhost:5173/register
@@ -131,5 +128,5 @@ docker compose version
 If you forgot to create ``.env`` from the ``.env.example``
 - Open a terminal from the project root and run:
 ```powershell
-cp .env.example .env
+Copy-Item .env.example .env
 ```

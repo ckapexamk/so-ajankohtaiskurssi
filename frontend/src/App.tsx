@@ -2,6 +2,8 @@ import React from 'react';
 import { Route, Routes } from 'react-router';
 import './App.css';
 
+import { AppShell } from '@mantine/core';
+
 import ProtectedRoute from './auth/ProtectedRoute';
 import DashboardPage from "./pages/DashboardPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -15,6 +17,10 @@ import CalendarPage from "./pages/CalendarPage";
 const App : React.FC = () : React.ReactElement => {
   return (
     <>
+      <AppShell padding="md"
+        header={{ height: 60, offset: true }}
+      >
+      <AppShell.Main>
       <Routes>
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -28,7 +34,11 @@ const App : React.FC = () : React.ReactElement => {
           <Route path="/plans/:planId" element={<PlansDetailPage />} />
           <Route path="/calendar" element={<CalendarPage />} />
         </Route>
+
       </Routes>
+      </AppShell.Main>
+      </AppShell>
+
     </>
   );
 };

@@ -1,3 +1,5 @@
+import { EmptyState as Empty } from '@mantine/core';
+
 interface EmptyStateProps {
   title: string;
   children?: React.ReactNode;
@@ -9,11 +11,10 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   children,
   action,
 }): React.ReactElement => (
-  <section aria-label={title}>
-    <h3>{title}</h3>
+  <Empty p="1em" title={title}>
     {children && <p>{children}</p>}
     {action}
-  </section>
+  </Empty>
 );
 
 export default EmptyState;

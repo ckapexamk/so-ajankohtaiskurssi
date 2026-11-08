@@ -4,10 +4,10 @@ Copy this file to `docs/reports/sprint-03.md` in **your** repo and fill the blan
 
 | Field        | Your answer |
 | ------------ | ----------- |
-| **Dates**    |             |
-| **Names**    |             |
-| **Repo URL** |             |
-| **Branch**   |             |
+| **Dates**    | 18.10.2026   |
+| **Names**    | **ckapexamk** Kalle P. |
+| **Repo URL** | https://github.com/ckapexamk/so-ajankohtaiskurssi.git |
+| **Branch**   | sprint-03/sessions |
 
 Tickets: [sprint-03-tickets.md](../tickets/sprint-03-tickets.md) · Index: [../README.md](../README.md)
 
@@ -16,6 +16,10 @@ Tickets: [sprint-03-tickets.md](../tickets/sprint-03-tickets.md) · Index: [../R
 From the tickets: owners CRUD **sessions** with **planned** and **actual** measurements; **clone** keeps planned and clears actuals (source edits do not cascade); plans use **`plan_id`** (no junction) ordered by **`session_at`**; **calendar** month+week over dated sessions; User A cannot open User B’s session/plan/goal/calendar by ID; Dashboard shows only the current user’s recent sessions.
 
 In your words (2–3 sentences): did you meet that, and what is still rough?
+
+> The general 'Must' requirements for the sprint were met.
+> I didn't do any of the stretch tickets.
+> I still need to redo/style the UI when I have the time.
 
 ## Tickets
 

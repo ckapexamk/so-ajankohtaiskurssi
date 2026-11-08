@@ -2,6 +2,8 @@ import { useNavigate } from "react-router";
 import { useState } from "react";
 import apiReq from "../api/client";
 
+import { Alert, Button, Group, TextInput, Stack, Title } from '@mantine/core';
+
 interface NewUser {
   email: string;
   password: string;
@@ -50,57 +52,51 @@ const RegisterPage: React.FC = (): React.ReactElement => {
 
   return (
     <>
-      <h2>Register</h2>
+    <Stack align="stretch" style={{ maxWidth: 320, margin: "0 auto"}}>
+      <Title>Register</Title>
       {errorMessage && (
-        <div style={{ backgroundColor: "red", color: "white", padding: "1em" }}>
-          <strong role="alert">{errorMessage}</strong>
-        </div>
+        <Alert color="red" title="Error" variant="filled">{errorMessage}</Alert>
       )}
+
       <form
         onSubmit={registerUser}
         style={{ display: "flex", flexDirection: "column", gap: "0.5em" }}
       >
-        <label>
-          Email:
-          <div>
-            <input
+
+            <TextInput
+              label="Email"
               required
               type="email"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-          </div>
-        </label>
-        <label>
-          Password:
-          <div>
-            <input
+
+            <TextInput
+              label="Password"
               required
               type="password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-          </div>
-        </label>
-        <label>
-          Display name:
-          <div>
-            <input
+
+            <TextInput
+              label="Display Name"
               required
               placeholder="Display name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
             />
-          </div>
-        </label>
-        <div>
-          <button type="submit" disabled={disableInput}>
-            {disableInput ? "Please wait..." : "Submit"}
-          </button>
-        </div>
+
+        <Group mt="md" justify="flex-end">
+          <Button type="submit" disabled={disableInput}>
+            {disableInput ? "Please wait..." : "Register"}
+          </Button>
+        </Group>
+
       </form>
+      </Stack>
     </>
   );
 };

@@ -1,6 +1,8 @@
 import React from "react";
 import type { User } from "./ProtectedRoute";
 
+import { AppShellHeader, Button, Group, Text } from "@mantine/core";
+
 interface HeaderProps {
   user: User;
   logout: () => void;
@@ -10,13 +12,17 @@ const Header = ({
   logout
 }: HeaderProps): React.ReactElement => {
   return (
-    <header style={{ display: "flex", gap: "1em" }}>
-      <span>{user.display_name || user.email}</span>
+    <AppShellHeader p="xs">
+      <Group gap="lg">
+      <Text fw={700} c="blue">{user.display_name || user.email}</Text>
 
-      <button type="button" onClick={logout}>
+      <Button variant="light"
+        type="button"
+        onClick={logout}>
         Logout
-      </button>
-    </header>
+      </Button>
+      </Group>
+    </AppShellHeader>
   );
 };
 

@@ -2,10 +2,25 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
 import apiReq from "../api/client";
-import Alert from "../components/Alert";
+import { cloneSessionRequest } from "../api/sessions";
+import {
+  Alert,
+  Anchor,
+  Badge,
+  Button,
+  Container,
+  TextInput,
+  Modal,
+  Group,
+  NativeSelect,
+  SimpleGrid,
+  Stack,
+  Title,
+} from "@mantine/core";
+import { useDisclosure } from '@mantine/hooks';
+
 import EmptyState from "../components/EmptyState";
 
-type CalendarView = "month" | "week";
 type SessionStatus = "planned" | "in_progress" | "completed";
 
 interface CalendarSession {
@@ -21,6 +36,11 @@ interface Plan {
   name: string;
 }
 
+const parseDateKey = (value: string): Date => {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
 const dateKey = (date: Date): string =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
     date.getDate(),
@@ -28,12 +48,6 @@ const dateKey = (date: Date): string =>
 
 const atLocalMidnight = (date: Date): Date =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-const mondayOf = (date: Date): Date => {
-  const monday = atLocalMidnight(date);
-  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
-  return monday;
-};
 
 const addDays = (date: Date, days: number): Date => {
   const result = new Date(date);
@@ -47,11 +61,6 @@ const dateTimeLocal = (value: string): string => {
   return date.toISOString().slice(0, 16);
 };
 
-const formatTime = (value: string): string =>
-  new Intl.DateTimeFormat(undefined, { timeStyle: "short" }).format(
-    new Date(value),
-  );
-
 const statusColors: Record<SessionStatus, string> = {
   planned: "#315b9a",
   in_progress: "#31859a",
@@ -60,24 +69,30 @@ const statusColors: Record<SessionStatus, string> = {
 
 const CalendarPage: React.FC = (): React.ReactElement => {
   const queryClient = useQueryClient();
-  const [view, setView] = useState<CalendarView>("month");
   const [cursor, setCursor] = useState(() => atLocalMidnight(new Date()));
+  const [view, setView] = useState<"month" | "week">("month");
   const [planId, setPlanId] = useState("");
   const [cloneSource, setCloneSource] = useState<CalendarSession | null>(null);
   const [cloneName, setCloneName] = useState("");
   const [cloneAt, setCloneAt] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [opened, { open, close }] = useDisclosure(false);
 
   const visibleDates = useMemo(() => {
     if (view === "week") {
-      const start = mondayOf(cursor);
+      const start = atLocalMidnight(cursor);
+      start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
       return Array.from({ length: 7 }, (_, index) => addDays(start, index));
     }
 
     const firstDay = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
-    const start = mondayOf(firstDay);
+    const start = atLocalMidnight(firstDay);
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+
     const lastDay = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
-    const end = addDays(mondayOf(lastDay), 6);
+    const end = atLocalMidnight(lastDay);
+    end.setDate(end.getDate() + ((7 - end.getDay()) % 7));
+
     const days: Date[] = [];
     for (let day = start; day <= end; day = addDays(day, 1)) {
       days.push(day);
@@ -104,6 +119,15 @@ const CalendarPage: React.FC = (): React.ReactElement => {
     },
   });
 
+  const sessionsByDate = useMemo(() => {
+    const sessions = new Map<string, CalendarSession[]>();
+    for (const session of calendar.data ?? []) {
+      const key = dateKey(new Date(session.session_at));
+      sessions.set(key, [...(sessions.get(key) ?? []), session]);
+    }
+    return sessions;
+  }, [calendar.data]);
+
   const plans = useQuery({
     queryKey: ["plans"],
     queryFn: () => apiReq<Plan[]>("/plans"),
@@ -114,13 +138,10 @@ const CalendarPage: React.FC = (): React.ReactElement => {
       if (!cloneSource) throw new Error("Choose a session to clone.");
       if (!cloneAt) throw new Error("Choose a date and time for the clone.");
 
-      return apiReq<CalendarSession>(`/sessions/${cloneSource.id}/clone`, {
-        method: "POST",
-        body: JSON.stringify({
-          name: cloneName.trim() || cloneSource.name,
-          session_at: new Date(cloneAt).toISOString(),
-          plan_id: cloneSource.plan_id,
-        }),
+      return cloneSessionRequest<CalendarSession>(cloneSource.id, {
+        name: cloneName.trim() || cloneSource.name,
+        session_at: new Date(cloneAt).toISOString(),
+        plan_id: cloneSource.plan_id,
       });
     },
     onSuccess: async () => {
@@ -140,6 +161,7 @@ const CalendarPage: React.FC = (): React.ReactElement => {
     setCloneSource(session);
     setCloneName(`${session.name} (copy)`);
     setCloneAt(dateTimeLocal(session.session_at));
+    open();
   };
 
   const submitClone = (event: React.SubmitEvent<HTMLFormElement>) => {
@@ -155,25 +177,23 @@ const CalendarPage: React.FC = (): React.ReactElement => {
     );
   };
 
-  const sessionsByDay = new Map<string, CalendarSession[]>();
-  for (const session of calendar.data ?? []) {
-    const key = dateKey(new Date(session.session_at));
-    const sessions = sessionsByDay.get(key) ?? [];
-    sessions.push(session);
-    sessionsByDay.set(key, sessions);
-  }
-
-  const monthTitle =
+  const dateFormatter = new Intl.DateTimeFormat(undefined, {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+  const title =
     view === "month"
       ? new Intl.DateTimeFormat(undefined, {
           month: "long",
           year: "numeric",
         }).format(cursor)
-      : `${new Intl.DateTimeFormat(undefined, {
-          dateStyle: "medium",
-        }).format(visibleDates[0])} – ${new Intl.DateTimeFormat(undefined, {
-          dateStyle: "medium",
-        }).format(visibleDates[6])}`;
+      : `${dateFormatter.format(visibleDates[0])} – ${dateFormatter.format(
+          visibleDates[visibleDates.length - 1],
+        )}`;
+  const weekdayFormatter = new Intl.DateTimeFormat(undefined, {
+    weekday: "short",
+  });
 
   if (plans.isError) {
     return (
@@ -186,179 +206,236 @@ const CalendarPage: React.FC = (): React.ReactElement => {
   }
 
   return (
-    <section>
-      <h1>Calendar</h1>
-      <p><Link to="/sessions">Back to sessions</Link></p>
-      <div style={{ display: "flex", gap: "1em", justifyContent: "space-between"}}>
-        <div style={{ display: "flex", gap: "1em" }}>
-        <div><strong>{monthTitle} </strong></div>
-        <div>
-          <button type="button" onClick={() => moveCursor(-1)}>Previous</button>
-          <button type="button" onClick={() => moveCursor(1)}>Next</button></div>
-        </div>
-        <div style={{ display: "flex", gap: "0.5em" }}>
-        <div>
-        <button type="button" onClick={() => setCursor(atLocalMidnight(new Date()))}>
-          Today
-        </button></div>
-        <div>
-        <label>
-          View
-          <select
-            value={view}
-            onChange={(event) => setView(event.target.value as CalendarView)}
-          >
-            <option value="month">Month</option>
-            <option value="week">Week</option>
-          </select>
-        </label></div>
-        
-        <label>
-          Plan
-          <select
-            value={planId}
-            onChange={(event) => setPlanId(event.target.value)}
-          >
-            <option value="">All plans</option>
-            {plans.data?.map((plan) => (
-              <option key={plan.id} value={plan.id}>
-                {plan.name}
-              </option>
-            ))}
-          </select>
-        </label></div>
-      </div>
+    <>
+      <Container fluid style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <Title>Calendar</Title>
 
-      {error && <Alert>{error}</Alert>}
-      {calendar.isPending ? (
-        <p>Loading calendar…</p>
-      ) : calendar.isError ? (
-        <Alert>
-          {calendar.error instanceof Error
-            ? calendar.error.message
-            : "Could not load calendar sessions."}
-        </Alert>
-      ) : (
-        <>
-          {calendar.data.length === 0 && (
-            <EmptyState
-              title="No sessions scheduled for this date range."
-              action={<Link to="/sessions/new">Create a session</Link>}
+        <Group mb="md">
+          <nav aria-label="Main navigation">
+            <Anchor component={Link} to="/">Dashboard</Anchor>
+            {` / `}
+            <Anchor component={Link} to="/sessions">Sessions</Anchor>
+            {` / `}
+            <Anchor component={Link} to="/plans">Plans</Anchor>
+          </nav>
+        </Group>
+
+        <Group justify="space-between" mb="md">
+          <Group>
+            <Button variant="default" onClick={() => moveCursor(-1)}>
+              Previous
+            </Button>
+            <strong>{title}</strong>
+            <Button variant="default" onClick={() => moveCursor(1)}>
+              Next
+            </Button>
+            <Button variant="default"
+              onClick={() => setCursor(atLocalMidnight(new Date()))}
             >
-            </EmptyState>
-          )}
-          <div
-            role="grid"
-            aria-label={view === "month" ? "Monthly calendar" : "Weekly calendar"}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-              marginTop: "1em",
-            }}
-          >
-            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
-              (day) => (
-                <strong role="columnheader" key={day}>{day}</strong>
-              ),
-            )}
-            {visibleDates.map((date) => {
-              const key = dateKey(date);
-              const sessions = sessionsByDay.get(key) ?? [];
-              const outsideMonth =
-                view === "month" && date.getMonth() !== cursor.getMonth();
+              Today
+            </Button>
+          </Group>
 
-              return (
+          <Group>
+            <div role="group" aria-label="Calendar view">
+              <Button variant={view === "month" ? "light" : "default"}
+                aria-pressed={view === "month"}
+                onClick={() => setView("month")}
+              >
+                Month
+              </Button>
+
+              <Button variant={view === "week" ? "light" : "default"}
+                aria-pressed={view === "week"}
+                onClick={() => setView("week")}
+              >
+                Week
+              </Button>
+            </div>
+              <NativeSelect
+                value={planId}
+                onChange={(event) => setPlanId(event.target.value)}
+              >
+                <option value="">All plans</option>
+                {plans.data?.map((plan) => (
+                  <option key={plan.id} value={plan.id}>
+                    {plan.name}
+                  </option>
+                ))}
+              </NativeSelect>
+          </Group>
+        </Group>
+
+        {error && <Alert color="red" title="Error" variant="filled" mb="md">{error}</Alert>}
+        {calendar.isPending ? (
+          <p>Loading calendar…</p>
+        ) : calendar.isError ? (
+          <Alert>
+            {calendar.error instanceof Error
+              ? calendar.error.message
+              : "Could not load calendar sessions."}
+          </Alert>
+        ) : (
+          <>
+            {calendar.data.length === 0 && (
+              <EmptyState
+                title="No sessions scheduled for this date range."
+                action={<Anchor component={Link} to={`/sessions/new`} fw={600}
+                        >Create a session</Anchor>
+                }                
+              />
+            )}
+            <SimpleGrid cols={7} spacing="xs" mb="xs">
+              {visibleDates.slice(0, 7).map((date) => (
                 <div
-                  role="gridcell"
-                  key={key}
-                  style={{
-                    border: "1px solid #bbb",
-                    minHeight: view === "month" ? "2em" : "6em",
-                    padding: "0.2em",
-                    opacity: outsideMonth ? 0.25 : 1,
-                  }}
+                  key={date.getDay()}
+                  style={{ textAlign: "center", fontWeight: 600 }}
                 >
-                  <strong>{date.getDate()}</strong>
-                  {sessions.map((session) => (
+                  {weekdayFormatter.format(date)}
+                </div>
+              ))}
+            </SimpleGrid>
+            <SimpleGrid cols={7} spacing="none">
+              {visibleDates.map((date) => {
+                const key = dateKey(date);
+                const inCurrentMonth = date.getMonth() === cursor.getMonth();
+                const isCursorDate = key === dateKey(cursor);
+                const sessions = sessionsByDate.get(key) ?? [];
+                return (
+                  <div
+                    key={key}
+                    style={{
+                      minWidth: 0,
+                      minHeight: view === "week" ? 300 : 110,
+                      padding: "0.25em",
+                      margin: "2px",
+                      border: "1px solid lightgray",
+                      borderRadius: "var(--mantine-radius-sm)",
+                      opacity: inCurrentMonth ? 1 : 0.5,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      aria-label={dateFormatter.format(date)}
+                      onClick={() => setCursor(parseDateKey(key))}
+                      style={{
+                        minWidth: "2rem",
+                        minHeight: "2rem",
+                        border: `2px solid ${
+                          isCursorDate
+                            ? "var(--mantine-primary-color-filled)"
+                            : "transparent"
+                        }`,
+                        borderRadius: "var(--mantine-radius-sm)",
+                        background: "transparent",
+                        font: "inherit",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        padding: 0,
+                      }}
+                    >
+                      {date.getDate()}
+                    </button>
                     <div
-                      key={session.id}
                       style={{
                         display: "flex",
                         flexDirection: "column",
-                        textAlign: "center",
-                        backgroundColor: statusColors[session.status],
-                        color: "white",
-                        borderRadius: "0.4em",
-                        padding: "0.2em",
-                        marginTop: "0.2em"
+                        gap: "0.25em",
+                        marginTop: "0.5em",
                       }}
-                    >{formatTime(session.session_at)}
-                      <Link
-                        to={`/sessions/${session.id}/edit`}
-                        style={{ color: "inherit" }}
-                      >
-                      {session.name}
-                      </Link>
-                      <button
-                        style={{ marginTop: "0.5em" }}
-                        type="button"
-                        onClick={() => startClone(session)}
-                        aria-label={`Clone ${session.name} to another date`}
-                      >
-                        Clone
-                      </button>
+                    >
+                      {sessions.map((session) => (
+                        <Stack
+                          key={session.id}
+                          gap="xs"
+                          style={{
+                            width: "100%",
+                            borderRadius: "var(--mantine-radius-sm)",
+                            padding: "0.5em",
+                            background: statusColors[session.status],
+                            color: "white",
+                          }}
+                          title={session.name}
+                        >
+                          
+                          <Anchor component={Link} to={`/sessions/${session.id}`}
+                            c="white"
+                            fw={600}
+                          >
+                            {session.name}
+                          </Anchor>
+                          <Badge
+                            size="sm"
+                            color={
+                              session.status === "planned"
+                                ? "blue"
+                                : session.status === "in_progress"
+                                  ? "cyan"
+                                  : "green"
+                            }
+                          >
+                            {session.status.replace("_", " ")}
+                          </Badge>
+                          <Button
+                            size="compact-xs"
+                            variant="white"
+                            color="dark"
+                            onClick={() => startClone(session)}
+                          >Clone
+                          </Button>
+                        </Stack>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
+                  </div>
+                );
+              })}
+            </SimpleGrid>
+          </>
+        )}
 
       {cloneSource && (
-        <dialog open aria-labelledby="clone-calendar-session-title">
+        <Modal opened={opened} onClose={close} title="Clone session to date" centered>
           <form onSubmit={submitClone}
             style={{
                 display: "flex",
                 flexDirection: "column",
                 gap: "0.5em",
             }}>
-            <strong id="clone-calendar-session-title">Clone session to date</strong>
-            <label>
-              Name
-              <div>
-              <input
+  
+              <TextInput
+                label="Name"
                 required
                 maxLength={100}
                 value={cloneName}
                 onChange={(event) => setCloneName(event.target.value)}
-              /></div>
-            </label>
-            <label>
-              Date and time
-              <div>
-              <input
+              />
+
+              <TextInput
+                label="Date and time"
                 required
                 type="datetime-local"
                 value={cloneAt}
                 onChange={(event) => setCloneAt(event.target.value)}
-              /></div>
-            </label>
-            <button type="submit" disabled={cloneSession.isPending}>
+              />
+
+            <Group mt="md" justify="space-between">
+
+            <Button type="submit" disabled={cloneSession.isPending}>
               {cloneSession.isPending ? "Cloning…" : "Create clone"}
-            </button>
-            <button
-              type="button"
+            </Button>
+
+            <Button variant="default"
               onClick={() => setCloneSource(null)}
               disabled={cloneSession.isPending}
-            >
-              Cancel
-            </button>
+            >Cancel
+            </Button>
+
+            </Group>
           </form>
-        </dialog>
+        </Modal>
       )}
-    </section>
+      </Container>
+    </>
   );
 };
 

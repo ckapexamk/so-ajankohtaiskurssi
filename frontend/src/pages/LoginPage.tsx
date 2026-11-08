@@ -3,6 +3,8 @@ import { useState } from "react";
 import { setToken } from "../auth/token";
 import apiReq from "../api/client";
 
+import { Alert, AppShell, Button, Group, TextInput, Title } from '@mantine/core';
+
 interface LoginUser {
   email: string;
   password: string;
@@ -51,49 +53,40 @@ const LoginPage: React.FC = (): React.ReactElement => {
   };
 
   return (
-    <>
-      <h2>Login</h2>
+    <AppShell.Main style={{ maxWidth: 320, margin: "0 auto"}}>
+      <Title>Login</Title>
       {errorMessage && (
-        <div style={{ backgroundColor: "red", color: "white", padding: "1em" }}>
-          <strong role="alert">{errorMessage}</strong>
-        </div>
+        <Alert color="red" title="Error" variant="filled">{errorMessage}</Alert>
       )}
       <form
         onSubmit={loginUser}
         style={{ display: "flex", flexDirection: "column", gap: "0.5em" }}
       >
-        <label>
-          Email:
-          <div>
-            <input
-              required
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-        </label>
+          <TextInput
+            label="Email"
+            required
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-        <label>
-          Password:
-          <div>
-            <input
-              required
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-        </label>
-        <div>
-          <button type="submit" disabled={disableInput}>
-            {disableInput ? "Please wait..." : "Submit"}
-          </button>
-        </div>
+          <TextInput
+            label="Password"
+            required
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <Group mt="md" justify="flex-end">
+            <Button type="submit" disabled={disableInput}>
+              {disableInput ? "Please wait..." : "Login"}
+            </Button>
+          </Group>
+            
       </form>
-    </>
+    </AppShell.Main>
   );
 };
 

@@ -2,6 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 import apiReq from "../api/client";
 
+import EmptyState from "../components/EmptyState";
+import { Anchor, Container, Divider, Group, Paper, Title } from '@mantine/core';
+
 interface WorkoutSession {
   id: string;
   name: string;
@@ -39,27 +42,37 @@ const DashboardPage: React.FC = (): React.ReactElement => {
     .slice(0, 5);
 
   return (
-    <main>
-      <h1>Dashboard</h1>
-      <nav aria-label="Main navigation">
-        <Link to="/sessions">Sessions</Link>{" / "}
-        <Link to="/plans">Plans</Link>{" / "}
-        <Link to="/calendar">Calendar</Link>
-      </nav>
+    <>
+    <Container fluid style={{ maxWidth: 800, margin: "0 auto" }}>
 
-      <section aria-labelledby="recent-sessions-heading">
-        <h2 id="recent-sessions-heading">Recent dated sessions</h2>
+      <Title>Dashboard</Title>
+
+      <Group>
+        <nav aria-label="Main navigation">
+          <Anchor component={Link} to="/sessions">Sessions</Anchor>
+          {` / `}
+          <Anchor component={Link} to="/plans">Plans</Anchor>
+          {` / `}
+          <Anchor component={Link} to="/calendar">Calendar</Anchor>
+        </nav>
+      </Group>
+
+        <Title order={2} mt="1em">Recent dated sessions</Title>
+        
         {recentSessions.length === 0 ? (
-          <p>
-            You have no sessions.{" "}
-            <Link to="/sessions/new">Create a session</Link>.
-          </p>
+          <EmptyState
+            title="You have no sessions."
+            action={<Anchor component={Link} to="/sessions/new">Create a session</Anchor>}
+          >
+          </EmptyState>
+          
         ) : (
-          <dl>
+          <Paper p="md" m="md">
+          <dl style={{ marginLeft: "1em"}}>
             {recentSessions.map((session) => (
               <li key={session.id}>
                 <dt>
-                  <Link to={`/sessions/${session.id}/edit`}>{session.name}</Link>
+                  <Anchor component={Link} to={`/sessions/${session.id}/edit`}>{session.name}</Anchor>
                 </dt>
                 <dd style={{ marginBottom: "1em" }}>
                   {"Status: "}
@@ -67,13 +80,17 @@ const DashboardPage: React.FC = (): React.ReactElement => {
                   {" — Session at: "}
                   {formatDate(session.session_at)}
                 </dd>
+                <Divider mb="1em"></Divider>
               </li>
             ))}
+            
           </dl>
+          <Anchor component={Link} to="/sessions">View all sessions</Anchor>
+          </Paper>
         )}
-        <Link to="/sessions">View all sessions</Link>
-      </section>
-    </main>
+        
+    </Container>  
+    </>
   );
 };
 
