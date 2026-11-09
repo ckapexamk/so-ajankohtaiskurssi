@@ -8,7 +8,12 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from statistics import mean
-from typing import TypedDict
+from typing import Literal, TypedDict
+
+
+class SeriesPoint(TypedDict):
+    period_label: str
+    value: int | float
 
 
 class ActivitySummary(TypedDict):
@@ -46,6 +51,71 @@ class SessionInput:
     session_at: datetime | None
     intensity: int | None 
     activities: tuple[ActivityInput, ...]
+
+# Progress time series
+SeriesMetric = Literal["session_count", "duration_min", "distance_km"]
+Granularity = Literal["week", "month"]
+
+
+def sessions_series(
+    sessions: list[SessionInput],
+    metric: SeriesMetric,
+    granularity: Granularity,
+    activity_type: str | None = None,
+) -> list[SeriesPoint]:
+    """Using ISO time convention for months and weeks.
+    
+    Weeks start on Monday.
+    Unscheduled sessions are skipped.
+    """
+    if granularity not in ("week", "month"):
+        raise ValueError("granularity must be 'week' or 'month'")
+    if metric not in ("session_count", "duration_min", "distance_km"):
+        raise ValueError("unsupported series metric")
+
+    time_series: dict[str, Decimal] = {}
+
+    for session in sessions:
+        if session.session_at is None:
+            continue
+
+        activities = session.activities
+        if activity_type is not None:
+            activities = tuple(
+                activity
+                for activity in activities
+                if activity.activity_type == activity_type
+            )
+            if not activities:
+                continue
+
+        session_date = session.session_at.date()
+        if granularity == "week":
+            iso_year, iso_week, _ = session_date.isocalendar()
+            period = f"{iso_year}-W{iso_week:02d}"
+        else:
+            period = f"{session_date.year:04d}-{session_date.month:02d}"
+
+        if metric == "session_count":
+            value = Decimal("1")
+        else:
+            value = sum(
+                (
+                    activity.measurements.get(metric, Decimal("0"))
+                    for activity in activities
+                ),
+                start=Decimal("0"),
+            )
+
+        time_series[period] = time_series.get(period, Decimal("0")) + value
+
+    return [
+        {
+            "period_label": period,
+            "value": int(value) if metric == "session_count" else float(value),
+        }
+        for period, value in sorted(time_series.items())
+    ]
 
 
 def session_summary(sessions: list[SessionInput]) -> SessionSummary:
