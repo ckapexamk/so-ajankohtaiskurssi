@@ -5,7 +5,7 @@ Callers must pass sessions already filtered for the logged-in user.
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from statistics import mean
 from typing import Literal, TypedDict
@@ -28,7 +28,7 @@ class SessionSummary(TypedDict):
     by_activity_type: dict[str, ActivitySummary]
 
 
-# a single activity
+# dataclasses for Input
 @dataclass(frozen=True)
 class ActivityInput:
     """An activity in a session
@@ -40,17 +40,17 @@ class ActivityInput:
     measurements: Mapping[str, Decimal]
 
 
-# session data
 @dataclass(frozen=True)
 class SessionInput:
     """Session fields needed by analytics.
 
-    session_at  : None when the session is unscheduled.
+    session_at  : Null when the session is unscheduled.
     intensity   : scale of 1-10, or None when not recorded.
     """
     session_at: datetime | None
     intensity: int | None 
     activities: tuple[ActivityInput, ...]
+
 
 # Progress time series
 SeriesMetric = Literal["session_count", "duration_min", "distance_km"]
@@ -118,26 +118,76 @@ def sessions_series(
     ]
 
 
-def session_summary(sessions: list[SessionInput]) -> SessionSummary:
-    """Sessions summary; no unscheduled sessions.
+def total_measurement(
+    sessions: list[SessionInput],
+    unit_slug: str,
+) -> Decimal:
+    """Total of a unit_slug measurements / Null = 0"""
+    total = Decimal("0")
 
-    Empty measurements are zeros.
-    Average intensity for empty set is 'null'.
-    """
-    scheduled_sessions = [
-        session for session in sessions if session.session_at is not None
+    for session in sessions:
+        for activity in session.activities:
+            total += activity.measurements.get(unit_slug, Decimal("0"))
+
+    return total
+
+
+def sessions_intensity(sessions: list[SessionInput]) -> float | None:
+    """Average intensity of sessions, or Null if none were recorded."""
+    intensities = [
+        session.intensity
+        for session in sessions
+        if session.intensity is not None
     ]
+    return float(mean(intensities)) if intensities else None
 
-    return {
-        "session_count": len(scheduled_sessions),
-        "total_duration_min": float(total_measurement(scheduled_sessions, "duration_min")),
-        "total_distance_km": float(total_measurement(scheduled_sessions, "distance_km")),
-        "average_intensity": sessions_intensity(scheduled_sessions),
-        "by_activity_type": {
-            activity_type: {"session_count": count}
-            for activity_type, count in sessions_activities(scheduled_sessions).items()
-        },
+
+def sessions_duration(sessions: list[SessionInput]) -> Decimal:
+    return total_measurement(sessions, "duration_min")
+
+
+def sessions_distance(sessions: list[SessionInput]) -> Decimal:
+    return total_measurement(sessions, "distance_km")
+
+
+def sessions_streaks(sessions: list[SessionInput]) -> dict[str, int]:
+    """Return current and longest streaks of active weeks.
+
+    Active week contains a session with a non-null session_at.
+    Current streak includes this week. A session for today is not required.
+    Unscheduled sessions do not count. Empty histories return zeros.
+    """
+    active_weeks = {
+        session.session_at.date()
+        - timedelta(days=session.session_at.date().weekday())
+        for session in sessions
+        if session.session_at is not None
     }
+
+    if not active_weeks:
+        return {"current": 0, "longest": 0}
+
+    current_week = date.today()
+    current_week -= timedelta(days=current_week.weekday())
+
+    current = 0
+    week = current_week
+    while week in active_weeks:
+        current += 1
+        week -= timedelta(days=7)
+
+    longest = 0
+    streak = 0
+    previous_week: date | None = None
+    for week in sorted(active_weeks):
+        if previous_week is None or week - previous_week != timedelta(days=7):
+            streak = 1
+        else:
+            streak += 1
+        longest = max(longest, streak)
+        previous_week = week
+
+    return {"current": current, "longest": longest}
 
 
 def sessions_activities(sessions: list[SessionInput]) -> dict[str, int]:
@@ -155,34 +205,23 @@ def sessions_activities(sessions: list[SessionInput]) -> dict[str, int]:
     return count
 
 
-def total_measurement(
-    sessions: list[SessionInput],
-    unit_slug: str,
-) -> Decimal:
-    """Total of a unit_slug measurements / None = 0"""
-    total = Decimal("0")
+def session_summary(sessions: list[SessionInput]) -> SessionSummary:
+    """Sessions summary; no unscheduled sessions.
 
-    for session in sessions:
-        for activity in session.activities:
-            total += activity.measurements.get(unit_slug, Decimal("0"))
-
-    return total
-
-
-def sessions_intensity(sessions: list[SessionInput]) -> float | None:
-    """Average intensity of sessions, or None if none were recorded."""
-    intensities = [
-        session.intensity
-        for session in sessions
-        if session.intensity is not None
+    Empty measurements are zeros.
+    Average intensity for empty set is Null.
+    """
+    scheduled_sessions = [
+        session for session in sessions if session.session_at is not None
     ]
-    return float(mean(intensities)) if intensities else None
 
-
-def sessions_duration(sessions: list[SessionInput]) -> Decimal:
-    return total_measurement(sessions, "duration_min")
-
-
-def sessions_distance(sessions: list[SessionInput]) -> Decimal:
-    return total_measurement(sessions, "distance_km")
-
+    return {
+        "session_count": len(scheduled_sessions),
+        "total_duration_min": float(total_measurement(scheduled_sessions, "duration_min")),
+        "total_distance_km": float(total_measurement(scheduled_sessions, "distance_km")),
+        "average_intensity": sessions_intensity(scheduled_sessions),
+        "by_activity_type": {
+            activity_type: {"session_count": count}
+            for activity_type, count in sessions_activities(scheduled_sessions).items()
+        },
+    }
