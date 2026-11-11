@@ -142,6 +142,7 @@ def find_stats_sessions(
     user_id: UUID,
     from_: datetime | None = None,
     to: datetime | None = None,
+    activity_type_id: UUID | None = None,
 ) -> tuple[list[WorkoutSession], dict[UUID, str], dict[UUID, str]]:
     """Return user's scheduled sessions and the slugs needed for analytics."""
     sessions = find_workouts(
@@ -149,6 +150,7 @@ def find_stats_sessions(
         user_id=user_id,
         from_=from_,
         to=to,
+        activity_type_id=activity_type_id,
         unscheduled=False,
     )
     activity_type_ids = {
@@ -156,6 +158,8 @@ def find_stats_sessions(
         for session in sessions
         for item in session.items
     }
+    if activity_type_id is not None:
+        activity_type_ids.add(activity_type_id)
     unit_type_ids = {
         measurement.unit_type_id
         for session in sessions
