@@ -144,7 +144,10 @@ def find_stats_sessions(
     to: datetime | None = None,
     activity_type_id: UUID | None = None,
 ) -> tuple[list[WorkoutSession], dict[UUID, str], dict[UUID, str]]:
-    """Return user's scheduled sessions and the slugs needed for analytics."""
+    """Load scheduled sessions belonging to user_id.
+
+    The API gets the user ID from the authenticated user, not from the client request.
+    """
     sessions = find_workouts(
         db=db,
         user_id=user_id,
