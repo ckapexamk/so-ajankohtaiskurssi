@@ -24,3 +24,8 @@ class StatsSummary(BaseModel):
 class StatsPeriod(BaseModel):
     period_label: str
     value: int | float
+
+
+class StatsStreaks(BaseModel):
+    current: int
+    longest: int

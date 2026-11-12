@@ -14,8 +14,9 @@ from app.schemas.stats import (
     ProgressMetric,
     StatsPeriod,
     StatsSummary,
+    StatsStreaks,
 )
-from app.services.stats import get_user_progress, get_user_summary
+from app.services.stats import get_user_progress, get_user_streaks, get_user_summary
 
 
 router = APIRouter(
@@ -82,4 +83,23 @@ def get_progress(
         activity_type_id=activity_type_id,
         from_=from_,
         to=to,
+    )
+
+
+@router.get("/streaks", response_model=StatsStreaks,
+    description=(
+        "Returns current and longest active-week streaks across all of the "
+        "authenticated user's scheduled session history. A week is active "
+        "when it contains at least one session with a non-null session_at; "
+        "weeks start on Monday."
+    ),
+)
+def get_streaks(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> StatsStreaks:
+    """Return streaks for all-history."""
+    return get_user_streaks(
+        db=db,
+        user_id=current_user.id,
     )

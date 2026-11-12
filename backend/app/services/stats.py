@@ -109,3 +109,14 @@ def get_user_progress(
         metric=analytics_metric,
         granularity=granularity,
     )
+
+
+def get_user_streaks(db: Session, user_id: UUID) -> dict[str, int]:
+    """Calculate streaks from all of the user's scheduled session history."""
+    sessions = _load_analytics(
+        db=db,
+        user_id=user_id,
+        from_=None,
+        to=None,
+    )
+    return analytics.sessions_streaks(sessions)
