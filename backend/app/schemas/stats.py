@@ -11,6 +11,8 @@ ProgressGranularity = Literal["week", "month"]
 
 class ActivityTypeSummary(BaseModel):
     session_count: int
+    average_intensity: float | None
+    total_distance_km: float | None
 
 
 class StatsSummary(BaseModel):

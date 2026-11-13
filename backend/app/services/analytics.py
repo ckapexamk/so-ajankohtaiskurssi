@@ -18,6 +18,8 @@ class SeriesPoint(TypedDict):
 
 class ActivitySummary(TypedDict):
     session_count: int
+    average_intensity: float | None
+    total_distance_km: float | None
 
 
 class SessionSummary(TypedDict):
@@ -205,23 +207,67 @@ def sessions_activities(sessions: list[SessionInput]) -> dict[str, int]:
     return count
 
 
+def sessions_activity_intensity(sessions: list[SessionInput],) -> dict[str, float | None]:
+    intensities: dict[str, list[int]] = {}
+
+    for session in sessions:
+        if session.session_at is None:
+            continue
+
+        activity_types = {activity.activity_type for activity in session.activities}
+        for activity_type in activity_types:
+            values = intensities.setdefault(activity_type, [])
+            if session.intensity is not None:
+                values.append(session.intensity)
+
+    return {
+        activity_type: float(mean(values)) if values else None
+        for activity_type, values in intensities.items()
+    }
+
+
+def sessions_activity_volume(sessions: list[SessionInput],) -> dict[str, dict[str, Decimal]]:
+    totals: dict[str, dict[str, Decimal]] = {}
+
+    for session in sessions:
+        if session.session_at is None:
+            continue
+
+        for activity in session.activities:
+            for unit_slug, value in activity.measurements.items():
+                if value is None:
+                    continue
+
+                by_unit = totals.setdefault(activity.activity_type, {})
+                by_unit[unit_slug] = by_unit.get(unit_slug, Decimal("0")) + value
+
+    return totals
+
+
 def session_summary(sessions: list[SessionInput]) -> SessionSummary:
     """Sessions summary; no unscheduled sessions.
 
     Empty measurements are zeros.
     Average intensity for empty set is Null.
     """
-    scheduled_sessions = [
-        session for session in sessions if session.session_at is not None
-    ]
+    scheduled_sessions = [session for session in sessions if session.session_at is not None]
+    activity_count = sessions_activities(scheduled_sessions)
+    activity_intensity = sessions_activity_intensity(scheduled_sessions)
+    activity_volume = sessions_activity_volume(scheduled_sessions)
+
+    by_activity_type = {}
+    for activity_type, count in activity_count.items():
+        distance = activity_volume.get(activity_type, {}).get("distance_km")
+        by_activity_type[activity_type] = {
+            "session_count": count,
+            "average_intensity": activity_intensity[activity_type],
+            "total_distance_km": float(distance) if distance is not None else None,
+    }
 
     return {
         "session_count": len(scheduled_sessions),
         "total_duration_min": float(total_measurement(scheduled_sessions, "duration_min")),
         "total_distance_km": float(total_measurement(scheduled_sessions, "distance_km")),
         "average_intensity": sessions_intensity(scheduled_sessions),
-        "by_activity_type": {
-            activity_type: {"session_count": count}
-            for activity_type, count in sessions_activities(scheduled_sessions).items()
-        },
+        "by_activity_type": by_activity_type
     }
