@@ -120,15 +120,6 @@ const PlansPage: React.FC = (): React.ReactElement => {
     <>
       <Container fluid style={{ maxWidth: 800, margin: "0 auto" }}>
       <Title>Plans</Title>
-      <Group>
-        <nav aria-label="Main navigation">
-          <Anchor component={Link} to="/">Dashboard</Anchor>
-          {` / `}
-          <Anchor component={Link} to="/sessions">Sessions</Anchor>
-          {` / `}
-          <Anchor component={Link} to="/calendar">Calendar</Anchor>
-        </nav>
-      </Group>
 
       {error && <Alert color="red" variant="filled">{error}</Alert>}
       <Paper withBorder shadow="sm" p="md" m="md">

@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import apiReq from "../api/client";
 
 import EmptyState from "../components/EmptyState";
-import { Anchor, Container, Divider, Group, Paper, Title } from '@mantine/core';
+import { Alert, Anchor, Button, Container, Divider, Paper, Title } from '@mantine/core';
 
 interface WorkoutSession {
   id: string;
@@ -26,9 +26,14 @@ const DashboardPage: React.FC = (): React.ReactElement => {
 
   if (sessions.isPending) return <p>Loading recent sessions…</p>;
   if (sessions.isError) {
-    return <p role="alert">Could not load your recent sessions.</p>;
+    return (
+      <Alert color="red" variant="filled">
+        {sessions.error instanceof Error
+          ? sessions.error.message
+          : "Could not load sessions."}
+      </Alert>
+    )
   }
-
   const recentSessions = sessions.data
     .filter(
       (session): session is WorkoutSession & { session_at: string } =>
@@ -44,25 +49,14 @@ const DashboardPage: React.FC = (): React.ReactElement => {
   return (
     <>
     <Container fluid style={{ maxWidth: 800, margin: "0 auto" }}>
-
       <Title>Dashboard</Title>
-
-      <Group>
-        <nav aria-label="Main navigation">
-          <Anchor component={Link} to="/sessions">Sessions</Anchor>
-          {` / `}
-          <Anchor component={Link} to="/plans">Plans</Anchor>
-          {` / `}
-          <Anchor component={Link} to="/calendar">Calendar</Anchor>
-        </nav>
-      </Group>
 
         <Title order={2} mt="1em">Recent dated sessions</Title>
         
         {recentSessions.length === 0 ? (
           <EmptyState
             title="You have no sessions."
-            action={<Anchor component={Link} to="/sessions/new">Create a session</Anchor>}
+            action={<Button component={Link} to="/sessions/new">Create a session</Button>}
           >
           </EmptyState>
           

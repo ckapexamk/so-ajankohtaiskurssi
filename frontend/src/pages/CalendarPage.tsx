@@ -197,7 +197,7 @@ const CalendarPage: React.FC = (): React.ReactElement => {
 
   if (plans.isError) {
     return (
-      <Alert>
+      <Alert color="red" variant="filled">
         {plans.error instanceof Error
           ? plans.error.message
           : "Could not load plans."}
@@ -207,18 +207,7 @@ const CalendarPage: React.FC = (): React.ReactElement => {
 
   return (
     <>
-      <Container fluid style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <Title>Calendar</Title>
-
-        <Group mb="md">
-          <nav aria-label="Main navigation">
-            <Anchor component={Link} to="/">Dashboard</Anchor>
-            {` / `}
-            <Anchor component={Link} to="/sessions">Sessions</Anchor>
-            {` / `}
-            <Anchor component={Link} to="/plans">Plans</Anchor>
-          </nav>
-        </Group>
+      <Container fluid mt="1em" style={{ maxWidth: 1100, margin: "0 auto" }}>
 
         <Group justify="space-between" mb="md">
           <Group>
@@ -270,7 +259,7 @@ const CalendarPage: React.FC = (): React.ReactElement => {
         {calendar.isPending ? (
           <p>Loading calendar…</p>
         ) : calendar.isError ? (
-          <Alert>
+          <Alert color="red" variant="filled">
             {calendar.error instanceof Error
               ? calendar.error.message
               : "Could not load calendar sessions."}

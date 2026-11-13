@@ -4,15 +4,17 @@ import './App.css';
 
 import { AppShell } from '@mantine/core';
 
-import ProtectedRoute from './auth/ProtectedRoute';
+import CalendarPage from "./pages/CalendarPage";
 import DashboardPage from "./pages/DashboardPage";
-import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
-import SessionsPage from "./pages/SessionsPage";
-import SessionsFormPage from "./pages/SessionFormPage";
 import PlansPage from "./pages/PlansPage";
 import PlansDetailPage from "./pages/PlansDetailPage";
-import CalendarPage from "./pages/CalendarPage";
+import ProgressPage from "./pages/ProgressPage";
+import ProtectedRoute from './auth/ProtectedRoute';
+import RegisterPage from "./pages/RegisterPage";
+import SessionsPage from "./pages/SessionsPage";
+import SessionsFormPage from "./pages/SessionFormPage";
+
 
 const App : React.FC = () : React.ReactElement => {
   return (
@@ -27,6 +29,7 @@ const App : React.FC = () : React.ReactElement => {
 
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<DashboardPage />} />
+          <Route path="/progress" element={<ProgressPage />} />
           <Route path="/sessions" element={<SessionsPage />} />
           <Route path="/sessions/new" element={<SessionsFormPage />} />
           <Route path="/sessions/:sessionId/edit" element={<SessionsFormPage />} />
