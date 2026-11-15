@@ -5,6 +5,7 @@
 - [Create First User](#create-first-user)
 - [Testing](#testing)
 - [Sqladmin](#sqladmin)
+- [Analytics](#analytics)
 - [Troubleshooting](#troubleshooting)
 
 ## About
@@ -103,6 +104,29 @@ The default admin credentials are:
 If you are using the app on a shared device change these to something more secure in your .env file.
 
 **NOTE:** JWT-secret key is NOT the same as sqladmin secret key, and can't be used to open /admin.  
+
+## Analytics
+- The volumes(values) come from **measurement unit slugs**, and do not require database queries.  
+- The analytics file written in **pure python** is located in `backend/app/services/analytics.py`.
+
+### Stats endpoints
+| URL               | Description                                                                                                                                                                                     | JSON example                                                                                                                                                             |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/stats/summary`  | Return a sessions summary.<br>Unscheduled sessions omitted.<br>Empty measurements are zeros.<br>Average intensity for empty set is Null.                                                        | "session_count": 0,<br>"total_duration_min": 0,<br>"total_distance_km": 0,<br>"average_intensity": 0,<br>  "by_activity_type": {<br>    "activity_type": { ... } |
+| `/stats/progress` | Return a value for metrics in a date range.<br>Metrics: `sessions`, `distance_km`, `duration_min`<br>Granularity: `month`, `week`<br>Weeks start on Monday<br>Unscheduled sessions are omitted. | Granularity = week<br>"period_label": "2026-W50",<br>"value": 2<br><br>Granularity = month<br>"period_label": "2026-11",<br> "value": 30                             |
+| `/stats/streaks`  | Return current and longest streaks of active weeks.                                                                                                                                             | "current": 1,<br>"longest": 2                                                                                                                                            |
+
+### Streak definition (week based)
+Streaks are counted from current and longest streaks of active weeks.
+- Current streak includes this week.
+- A session for today is not required.
+- Unscheduled sessions do not count and empty histories return zeros.
+
+### Pytest analytics
+Run the following command from the **backend** directory. This runs the test file in `backend/tests/`
+```powershell
+python -m pytest tests/test_analytics.py
+```
 
 ## Troubleshooting
 
