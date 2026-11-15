@@ -123,7 +123,7 @@ Streaks are counted from current and longest streaks of active weeks.
 - Unscheduled sessions do not count and empty histories return zeros.
 
 ### Pytest analytics
-Run the following command from the **backend** directory. This runs the test file in `backend/tests/`
+Run the following command from the `/backend` directory. This runs the test file in 
 ```powershell
 python -m pytest tests/test_analytics.py
 ```

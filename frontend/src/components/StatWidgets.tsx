@@ -14,8 +14,6 @@ import {
   Title,
 } from "@mantine/core";
 
-
-
 interface SessionSummary {
   session_count: number;
   total_duration_min: number;
@@ -62,12 +60,14 @@ function StatWidgets(): React.ReactElement {
 
       <Group mt="md" mb="md">
         <DatePickerInput
+          valueFormat="YYYY-MM-DD"
           label="From"
           placeholder="Pick a date"
           value={from || null}
           onChange={(value) => setFrom(value || "")}
         />
         <DatePickerInput
+          valueFormat="YYYY-MM-DD"
           label="To"
           placeholder="Pick a date"
           value={to || null}

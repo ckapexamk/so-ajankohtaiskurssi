@@ -108,9 +108,21 @@ def test_session_summary(
         "total_distance_km": 24.5,
         "average_intensity": 6.0,
         "by_activity_type": {
-            "running": {"session_count": 3},
-            "bench_press": {"session_count": 1},
-            "cycling": {"session_count": 1},
+            "running": {
+                "session_count": 3,
+                "average_intensity": 6.0,
+                "total_distance_km": 14.5,
+            },
+            "bench_press": {
+                "session_count": 1,
+                "average_intensity": 6.0,
+                "total_distance_km": None,
+            },
+            "cycling": {
+                "session_count": 1,
+                "average_intensity": None,
+                "total_distance_km": 10.0,
+            },
         },
     }
 
