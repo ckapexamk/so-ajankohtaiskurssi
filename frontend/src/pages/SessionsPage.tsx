@@ -14,6 +14,7 @@ import {
   Paper,
   TextInput,
   Title,
+  Loader
 } from "@mantine/core";
 import EmptyState from "../components/EmptyState";
 
@@ -157,7 +158,12 @@ const SessionsPage: React.FC = (): React.ReactElement => {
   };
 
   if (sessions.isPending || activities.isPending) {
-    return <p>Loading…</p>;
+    return (
+      <EmptyState
+        title="Loading sessions..."
+        action={<Loader color="blue" type="bars" />}
+      />
+    )
   }
 
   if (sessions.isError || activities.isError) {
@@ -177,16 +183,6 @@ const SessionsPage: React.FC = (): React.ReactElement => {
     <>
     <Container fluid style={{ maxWidth: 800, margin: "0 auto" }}>
       <Title>Sessions</Title>
-
-      <Group>
-        <nav aria-label="Main navigation">
-          <Anchor component={Link} to="/">Dashboard</Anchor>
-          {` / `}
-          <Anchor component={Link} to="/plans">Plans</Anchor>
-          {` / `}
-          <Anchor component={Link} to="/calendar">Calendar</Anchor>
-        </nav>
-      </Group>
 
           <Link to="/sessions/new">
             <Button mt="lg">

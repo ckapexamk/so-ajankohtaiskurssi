@@ -8,6 +8,8 @@ from app.models.workout_sessions import WorkoutSession
 from app.models.workout_session_items import WorkoutSessionItem
 from app.models.workout_session_measurements import WorkoutSessionMeasurements
 from app.models.workout_plan import WorkoutPlan
+from app.models.activity_type import ActivityType
+from app.models.unit_type import UnitType
 from app.schemas.session import (
     PlanCreate,
     PlanUpdate,
@@ -133,6 +135,64 @@ def find_workouts(
         statement = statement.where(WorkoutSession.plan_id == plan_id)
 
     return list(db.scalars(statement).all())
+
+
+def find_stats_sessions(
+    db: Session,
+    user_id: UUID,
+    from_: datetime | None = None,
+    to: datetime | None = None,
+    activity_type_id: UUID | None = None,
+) -> tuple[list[WorkoutSession], dict[UUID, str], dict[UUID, str]]:
+    """Load scheduled sessions belonging to user_id.
+
+    The API gets the user ID from the authenticated user, not from the client request.
+    """
+    sessions = find_workouts(
+        db=db,
+        user_id=user_id,
+        from_=from_,
+        to=to,
+        activity_type_id=activity_type_id,
+        unscheduled=False,
+    )
+    activity_type_ids = {
+        item.activity_type_id
+        for session in sessions
+        for item in session.items
+    }
+    if activity_type_id is not None:
+        activity_type_ids.add(activity_type_id)
+    unit_type_ids = {
+        measurement.unit_type_id
+        for session in sessions
+        for item in session.items
+        for measurement in item.measurements
+    }
+
+    activity_slugs = (
+        dict(
+            db.execute(
+                select(ActivityType.id, ActivityType.slug).where(
+                    ActivityType.id.in_(activity_type_ids)
+                )
+            ).all()
+        )
+        if activity_type_ids
+        else {}
+    )
+    unit_slugs = (
+        dict(
+            db.execute(
+                select(UnitType.id, UnitType.slug).where(
+                    UnitType.id.in_(unit_type_ids)
+                )
+            ).all()
+        )
+        if unit_type_ids
+        else {}
+    )
+    return sessions, activity_slugs, unit_slugs
 
 
 def find_workout(

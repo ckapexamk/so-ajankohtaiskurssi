@@ -3,95 +3,137 @@ import { Link } from "react-router";
 import apiReq from "../api/client";
 
 import EmptyState from "../components/EmptyState";
-import { Anchor, Container, Divider, Group, Paper, Title } from '@mantine/core';
+import StatWidgets from "../components/StatWidgets";
+import {
+    Alert,
+    Anchor,
+    Badge,
+    Button,
+    Container,
+    Group,
+    Loader,
+    List,
+    Paper,
+    Title,
+} from "@mantine/core";
 
 interface WorkoutSession {
-  id: string;
-  name: string;
-  session_at: string | null;
-  status: string;
+    id: string;
+    name: string;
+    session_at: string | null;
+    status: string;
 }
 
 const formatDate = (sessionAt: string): string =>
-  new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(sessionAt));
+    new Intl.DateTimeFormat(undefined, {
+        dateStyle: "short",
+        timeStyle: "short",
+    }).format(new Date(sessionAt));
 
 const DashboardPage: React.FC = (): React.ReactElement => {
-  const sessions = useQuery({
-    queryKey: ["sessions", "dashboard"],
-    queryFn: () => apiReq<WorkoutSession[]>("/sessions"),
-  });
+    const sessions = useQuery({
+        queryKey: ["sessions", "dashboard"],
+        queryFn: () => apiReq<WorkoutSession[]>("/sessions"),
+    });
 
-  if (sessions.isPending) return <p>Loading recent sessions…</p>;
-  if (sessions.isError) {
-    return <p role="alert">Could not load your recent sessions.</p>;
-  }
+    if (sessions.isPending) {
+        return (
+            <EmptyState
+                title="Loading dashboard..."
+                action={<Loader color="blue" type="bars" />}
+            />
+        );
+    }
 
-  const recentSessions = sessions.data
-    .filter(
-      (session): session is WorkoutSession & { session_at: string } =>
-        session.session_at !== null,
-    )
-    .sort(
-      (first, second) =>
-        new Date(second.session_at).getTime() -
-        new Date(first.session_at).getTime(),
-    )
-    .slice(0, 5);
+    if (sessions.isError) {
+        return (
+            <Alert color="red" variant="filled">
+                {sessions.error instanceof Error
+                    ? sessions.error.message
+                    : "Could not load sessions."}
+            </Alert>
+        );
+    }
 
-  return (
-    <>
-    <Container fluid style={{ maxWidth: 800, margin: "0 auto" }}>
+    const recentSessions = sessions.data
+        .filter(
+            (session): session is WorkoutSession & { session_at: string } =>
+                session.session_at !== null,
+        )
+        .sort(
+            (first, second) =>
+                new Date(second.session_at).getTime() -
+                new Date(first.session_at).getTime(),
+        )
+        .slice(0, 5);
 
-      <Title>Dashboard</Title>
-
-      <Group>
-        <nav aria-label="Main navigation">
-          <Anchor component={Link} to="/sessions">Sessions</Anchor>
-          {` / `}
-          <Anchor component={Link} to="/plans">Plans</Anchor>
-          {` / `}
-          <Anchor component={Link} to="/calendar">Calendar</Anchor>
-        </nav>
-      </Group>
-
-        <Title order={2} mt="1em">Recent dated sessions</Title>
-        
-        {recentSessions.length === 0 ? (
-          <EmptyState
-            title="You have no sessions."
-            action={<Anchor component={Link} to="/sessions/new">Create a session</Anchor>}
-          >
-          </EmptyState>
-          
-        ) : (
-          <Paper p="md" m="md">
-          <dl style={{ marginLeft: "1em"}}>
-            {recentSessions.map((session) => (
-              <li key={session.id}>
-                <dt>
-                  <Anchor component={Link} to={`/sessions/${session.id}/edit`}>{session.name}</Anchor>
-                </dt>
-                <dd style={{ marginBottom: "1em" }}>
-                  {"Status: "}
-                  {session.status}
-                  {" — Session at: "}
-                  {formatDate(session.session_at)}
-                </dd>
-                <Divider mb="1em"></Divider>
-              </li>
-            ))}
-            
-          </dl>
-          <Anchor component={Link} to="/sessions">View all sessions</Anchor>
-          </Paper>
-        )}
-        
-    </Container>  
-    </>
-  );
+    return (
+        <>
+            <Container fluid style={{ maxWidth: 800, margin: "0 auto" }}>
+                <Title>Dashboard</Title>
+                <Group justify="space-between">
+                    {recentSessions.length === 0 ? (
+                        <EmptyState
+                            title="You have no sessions."
+                            action={
+                                <Button component={Link} to="/sessions/new">
+                                    Create a session
+                                </Button>
+                            }
+                        ></EmptyState>
+                    ) : (
+                        <Paper p="md" m="md">
+                            <Title order={2} m="xs">
+                                Recent dated sessions
+                            </Title>
+                            <List>
+                                {recentSessions.map((session) => (
+                                    <List.Item
+                                        key={session.id}
+                                        pb="xs"
+                                        style={{
+                                            borderBottom: "1px lightgray solid",
+                                        }}
+                                    >
+                                        <Anchor
+                                            component={Link}
+                                            to={`/sessions/${session.id}/edit`}
+                                        >
+                                            <Title order={5} mb="xs">
+                                                {session.name}
+                                            </Title>
+                                        </Anchor>
+                                        <Badge
+                                            color={
+                                                session.status === "planned"
+                                                    ? "blue"
+                                                    : session.status ===
+                                                        "in_progress"
+                                                      ? "cyan"
+                                                      : "green"
+                                            }
+                                        >
+                                            {session.status}
+                                        </Badge>
+                                        {" — "}
+                                        {formatDate(session.session_at)}
+                                    </List.Item>
+                                ))}
+                            </List>
+                            <Anchor
+                                component={Link}
+                                to="/sessions"
+                                style={{ textAlign: "center" }}
+                            >
+                                View all sessions
+                            </Anchor>
+                        </Paper>
+                    )}
+                    <StatWidgets />
+                </Group>
+            </Container>
+        </>
+    );
 };
 
 export default DashboardPage;

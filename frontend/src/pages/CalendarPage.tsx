@@ -13,9 +13,10 @@ import {
   Modal,
   Group,
   NativeSelect,
+  SegmentedControl,
   SimpleGrid,
   Stack,
-  Title,
+  Loader
 } from "@mantine/core";
 import { useDisclosure } from '@mantine/hooks';
 
@@ -178,14 +179,14 @@ const CalendarPage: React.FC = (): React.ReactElement => {
   };
 
   const dateFormatter = new Intl.DateTimeFormat(undefined, {
-    month: "long",
+    month: "short",
     day: "numeric",
     year: "numeric",
   });
-  const title =
+  const selectedDate =
     view === "month"
       ? new Intl.DateTimeFormat(undefined, {
-          month: "long",
+          month: "short",
           year: "numeric",
         }).format(cursor)
       : `${dateFormatter.format(visibleDates[0])} – ${dateFormatter.format(
@@ -197,7 +198,7 @@ const CalendarPage: React.FC = (): React.ReactElement => {
 
   if (plans.isError) {
     return (
-      <Alert>
+      <Alert color="red" variant="filled">
         {plans.error instanceof Error
           ? plans.error.message
           : "Could not load plans."}
@@ -207,25 +208,14 @@ const CalendarPage: React.FC = (): React.ReactElement => {
 
   return (
     <>
-      <Container fluid style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <Title>Calendar</Title>
-
-        <Group mb="md">
-          <nav aria-label="Main navigation">
-            <Anchor component={Link} to="/">Dashboard</Anchor>
-            {` / `}
-            <Anchor component={Link} to="/sessions">Sessions</Anchor>
-            {` / `}
-            <Anchor component={Link} to="/plans">Plans</Anchor>
-          </nav>
-        </Group>
+      <Container fluid mt="1em" style={{ maxWidth: 1100, margin: "0 auto" }}>
 
         <Group justify="space-between" mb="md">
           <Group>
             <Button variant="default" onClick={() => moveCursor(-1)}>
               Previous
             </Button>
-            <strong>{title}</strong>
+            <strong>{selectedDate}</strong>
             <Button variant="default" onClick={() => moveCursor(1)}>
               Next
             </Button>
@@ -237,21 +227,17 @@ const CalendarPage: React.FC = (): React.ReactElement => {
           </Group>
 
           <Group>
-            <div role="group" aria-label="Calendar view">
-              <Button variant={view === "month" ? "light" : "default"}
-                aria-pressed={view === "month"}
-                onClick={() => setView("month")}
-              >
-                Month
-              </Button>
-
-              <Button variant={view === "week" ? "light" : "default"}
-                aria-pressed={view === "week"}
-                onClick={() => setView("week")}
-              >
-                Week
-              </Button>
-            </div>
+            <SegmentedControl
+              aria-label="Calendar view"
+              value={view}
+              onChange={(value) => {
+                if (value === "month" || value === "week") setView(value);
+              }}
+              data={[
+                { label: "Month", value: "month" },
+                { label: "Week", value: "week" },
+              ]}
+            />
               <NativeSelect
                 value={planId}
                 onChange={(event) => setPlanId(event.target.value)}
@@ -268,9 +254,12 @@ const CalendarPage: React.FC = (): React.ReactElement => {
 
         {error && <Alert color="red" title="Error" variant="filled" mb="md">{error}</Alert>}
         {calendar.isPending ? (
-          <p>Loading calendar…</p>
+          <Stack m="xl" align="center">
+            <Loader size="xl" color="indigo" type="bars" />
+          </Stack>
+
         ) : calendar.isError ? (
-          <Alert>
+          <Alert color="red" variant="filled">
             {calendar.error instanceof Error
               ? calendar.error.message
               : "Could not load calendar sessions."}
