@@ -13,8 +13,10 @@ import {
   Modal,
   Group,
   NativeSelect,
+  SegmentedControl,
   SimpleGrid,
-  Stack
+  Stack,
+  Loader
 } from "@mantine/core";
 import { useDisclosure } from '@mantine/hooks';
 
@@ -177,14 +179,14 @@ const CalendarPage: React.FC = (): React.ReactElement => {
   };
 
   const dateFormatter = new Intl.DateTimeFormat(undefined, {
-    month: "long",
+    month: "short",
     day: "numeric",
     year: "numeric",
   });
-  const title =
+  const selectedDate =
     view === "month"
       ? new Intl.DateTimeFormat(undefined, {
-          month: "long",
+          month: "short",
           year: "numeric",
         }).format(cursor)
       : `${dateFormatter.format(visibleDates[0])} – ${dateFormatter.format(
@@ -213,7 +215,7 @@ const CalendarPage: React.FC = (): React.ReactElement => {
             <Button variant="default" onClick={() => moveCursor(-1)}>
               Previous
             </Button>
-            <strong>{title}</strong>
+            <strong>{selectedDate}</strong>
             <Button variant="default" onClick={() => moveCursor(1)}>
               Next
             </Button>
@@ -225,21 +227,17 @@ const CalendarPage: React.FC = (): React.ReactElement => {
           </Group>
 
           <Group>
-            <div role="group" aria-label="Calendar view">
-              <Button variant={view === "month" ? "light" : "default"}
-                aria-pressed={view === "month"}
-                onClick={() => setView("month")}
-              >
-                Month
-              </Button>
-
-              <Button variant={view === "week" ? "light" : "default"}
-                aria-pressed={view === "week"}
-                onClick={() => setView("week")}
-              >
-                Week
-              </Button>
-            </div>
+            <SegmentedControl
+              aria-label="Calendar view"
+              value={view}
+              onChange={(value) => {
+                if (value === "month" || value === "week") setView(value);
+              }}
+              data={[
+                { label: "Month", value: "month" },
+                { label: "Week", value: "week" },
+              ]}
+            />
               <NativeSelect
                 value={planId}
                 onChange={(event) => setPlanId(event.target.value)}
@@ -256,7 +254,10 @@ const CalendarPage: React.FC = (): React.ReactElement => {
 
         {error && <Alert color="red" title="Error" variant="filled" mb="md">{error}</Alert>}
         {calendar.isPending ? (
-          <p>Loading calendar…</p>
+          <Stack m="xl" align="center">
+            <Loader size="xl" color="indigo" type="bars" />
+          </Stack>
+
         ) : calendar.isError ? (
           <Alert color="red" variant="filled">
             {calendar.error instanceof Error

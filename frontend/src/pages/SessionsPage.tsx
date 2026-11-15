@@ -14,6 +14,7 @@ import {
   Paper,
   TextInput,
   Title,
+  Loader
 } from "@mantine/core";
 import EmptyState from "../components/EmptyState";
 
@@ -157,7 +158,12 @@ const SessionsPage: React.FC = (): React.ReactElement => {
   };
 
   if (sessions.isPending || activities.isPending) {
-    return <p>Loading…</p>;
+    return (
+      <EmptyState
+        title="Loading sessions..."
+        action={<Loader color="blue" type="bars" />}
+      />
+    )
   }
 
   if (sessions.isError || activities.isError) {

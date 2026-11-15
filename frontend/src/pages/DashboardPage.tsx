@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import apiReq from "../api/client";
 
 import EmptyState from "../components/EmptyState";
-import { Alert, Anchor, Button, Container, Divider, Paper, Title } from '@mantine/core';
+import { Alert, Anchor, Button, Container, Divider, Loader, Paper, Title } from '@mantine/core';
 
 interface WorkoutSession {
   id: string;
@@ -24,7 +24,15 @@ const DashboardPage: React.FC = (): React.ReactElement => {
     queryFn: () => apiReq<WorkoutSession[]>("/sessions"),
   });
 
-  if (sessions.isPending) return <p>Loading recent sessions…</p>;
+  if (sessions.isPending) {
+    return (
+      <EmptyState
+        title="Loading dashboard..."
+        action={<Loader color="blue" type="bars" />}
+      />
+    )
+  }
+
   if (sessions.isError) {
     return (
       <Alert color="red" variant="filled">
@@ -34,6 +42,7 @@ const DashboardPage: React.FC = (): React.ReactElement => {
       </Alert>
     )
   }
+
   const recentSessions = sessions.data
     .filter(
       (session): session is WorkoutSession & { session_at: string } =>

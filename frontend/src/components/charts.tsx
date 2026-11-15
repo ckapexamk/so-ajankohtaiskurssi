@@ -147,7 +147,7 @@ const Progress: React.FC = (): React.ReactElement => {
   if (progressQuery.isPending || summaryQuery.isPending) {
     return (
       <EmptyState
-        title="Loading progress"
+        title="Loading progress..."
         action={<Loader color="blue" type="bars" />}
       />
     );
@@ -163,21 +163,21 @@ const Progress: React.FC = (): React.ReactElement => {
           </Button>
         }
       >
-        {progressQuery.error.message}
+        <Alert color="red" title="Error">{progressQuery.error.message}</Alert>
       </EmptyState>
     );
   }
   if (summaryQuery.isError) {
     return (
       <EmptyState
-        title="Could not load session data"
+        title="Could not load sessions data"
         action={
           <Button onClick={() => void summaryQuery.refetch()}>
             Try again
           </Button>
         }
       >
-        {summaryQuery.error.message}
+        <Alert color="red" title="Error">{summaryQuery.error.message}</Alert>
       </EmptyState>
     );
   }

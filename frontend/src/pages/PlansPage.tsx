@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
 import apiReq from "../api/client";
-import { Alert, Anchor, Button, Container, DataList, Divider, Group, NumberInput, Paper, Textarea, TextInput, Title } from "@mantine/core";
+import { Alert, Anchor, Button, Container, Loader, DataList, Divider, Group, NumberInput, Paper, Textarea, TextInput, Title } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import EmptyState from "../components/EmptyState";
 
@@ -105,7 +105,14 @@ const PlansPage: React.FC = (): React.ReactElement => {
     deletePlan.mutate(plan.id);
   };
 
-  if (plans.isPending) return <p>Loading plans…</p>;
+  if (plans.isPending) {
+    return (
+      <EmptyState
+        title="Loading plans..."
+        action={<Loader color="blue" type="bars" />}
+      />
+    )
+  }
   if (plans.isError) {
     return (
       <Alert color="red" variant="filled">
